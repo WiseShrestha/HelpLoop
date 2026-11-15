@@ -5,7 +5,8 @@ Help one, get helped by one, and meet someone new each time. A study-help exchan
 Team Khela Hobe · KAIST ISE Freshmen Idea League, Mon 23 Nov 2026.
 
 - `docs/SPEC.md`: product, reward rules and models, screens, data, metrics
-- `docs/PLAN.md`: schedule, tickets, who owns what, kick-off prompts for Claude Code and Codex
+- `docs/PLAN.md`: schedule, tickets, who owns what
+- `docs/CODEX_START.md`: step-by-step prompts for Codex (start here)
 - `AGENTS.md`: rules for both coding agents (Claude Code reads it through `CLAUDE.md`)
 - `src/lib/model/`: reward logic with tests (already done)
 - `supabase/migrations/0001_init.sql`: schema and access rules; `supabase/tests/run_local.sh` verifies them

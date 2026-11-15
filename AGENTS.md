@@ -20,6 +20,7 @@ Real students use it from Wed 18 Nov 2026; the presentation is Mon 23 Nov. Relia
 ## Ownership: who edits what
 | Folder | Owner |
 |---|---|
+| Root config (`package.json`, `tsconfig.json`, `next.config.*`, Tailwind, ESLint, `.github/`), `src/lib/supabase/**`, `src/middleware.ts`, `src/app/auth/**` | Codex for T0 and T1; after that, changes need a human's approval |
 | `src/app/(app)/**`, `src/components/**` | Codex (lane B: screens) |
 | `src/lib/model/**`, `src/server/**`, `src/app/model/**`, `src/app/admin/**`, `scripts/**` | Claude Code (lane A: rewards, data, admin) |
 | `supabase/**`, `src/lib/db/types.ts` | Frozen contract: humans approve every change |

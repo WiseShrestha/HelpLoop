@@ -14,8 +14,8 @@ What's left: the app around it (screens, sign-in, server glue, admin, simulator)
 |---|---|
 | Shresth | Product owner and the only merger. Accounts and setup (H0). Runs the draw. |
 | Suvasish | Tester and recruiter. Tests every preview on a phone, recruits helpers and perk hosts, owns the survey and deck. |
-| Claude Code | T0 scaffold, then lane A: server glue for rewards, queries, admin, economy simulator, analysis script. |
-| Codex | Lane B: every user-facing screen. |
+| Codex | T0 scaffold and T1 wiring first (so building starts now), then lane B: every user-facing screen. |
+| Claude Code | Lane A: server glue for rewards, queries, admin, economy simulator, analysis script. Reviews Codex's T0 and T1. |
 
 ## 3. How the two agents avoid collisions
 1. The schema and model code are fixed (see AGENTS.md). Both lanes build on them.
@@ -27,7 +27,7 @@ What's left: the app around it (screens, sign-in, server glue, admin, simulator)
 | When | What | Done when |
 |---|---|---|
 | **Mon 16, by 18:00** | Send the application email. | Sent |
-| Mon 16, evening | H0 (humans, about 1 h). T0 then T1 (Claude Code). | Blank app live on Vercel with Google sign-in; migration applied on Supabase; stubs merged |
+| Mon 16, evening | H0 (humans, about 1 h). T0 then T1 (Codex; T0 can start before H0 is finished). | Blank app live on Vercel with Google sign-in; migration applied on Supabase; stubs merged |
 | Tue 17 | Lane A: A1–A3. Lane B: B1–B6. Evening: 4–6 friends test on phones, file bugs. Suvasish recruits 5+ seniors as helpers and 3 perk hosts. | Ask → accept → meet → confirm → credits and tickets show in wallet, on a phone |
 | Wed 18, by 12:00 | Fix list (T2), B7–B8, A4. Admin creates this week's draw and publishes the commit hash. | Draw page shows the hash |
 | Wed 18, 12:00 | **Launch** to your freshman course group chats and the recruited seniors. | 20+ sign-ups by Wed night |
@@ -48,14 +48,14 @@ If you fall behind, cut in this order: suggested helpers on the request page, `/
 - Vercel project linked to the repo with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 - After you first sign in: `update profiles set is_admin = true where id = '<your user id>';` in the SQL editor.
 
-**T0. Scaffold** · Owner: Claude Code
+**T0. Scaffold** · Owner: Codex (reviewed by Claude Code)
 - Next.js + TS strict + Tailwind + Vitest + ESLint, pnpm scripts `lint`, `typecheck`, `test`, `build`. Keep the existing `src/lib/model` files and tests; they must pass under Vitest.
 - `tsconfig`: `allowImportingTsExtensions: true`, `noEmit: true`.
 - Supabase browser and server clients (`@supabase/ssr`), Google sign-in button, auth callback route, middleware sending signed-in users without a profile to `/onboarding`.
 - GitHub Action: the four checks plus `supabase/tests/run_local.sh` against a `postgres:16` service container.
 - Accept: Vercel preview signs in with Google; CI green.
 
-**T1. Contract wiring** · Owner: Claude Code · human approves
+**T1. Contract wiring** · Owner: Codex · human approves
 - Generate `src/lib/db/types.ts` from the live project. Add `src/server/{rewards,queries,draws}.ts` with the SPEC §8 signatures returning fixed sample data.
 - Accept: both lanes can import the stubs; types compile.
 
@@ -80,11 +80,10 @@ If you fall behind, cut in this order: suggested helpers on the request page, `/
 - **T2. Fix list** from Tuesday's phone test, assigned by folder ownership, ordered by severity.
 
 ## 6. Kick-off prompts
-**Claude Code (after H0):**
-> Read AGENTS.md, docs/SPEC.md and docs/PLAN.md. Do T0, then T1, each as its own branch and PR. Keep src/lib/model and supabase/ unchanged. Stop after T1's PR is open and list what a human must approve.
+**Codex:** follow `docs/CODEX_START.md`, which has every prompt in order (T0, T1, then B1–B8).
 
-**Codex (after T1 is merged):**
-> Read AGENTS.md, docs/SPEC.md and docs/PLAN.md. You are lane B. Do B1, then B2, each as its own branch and PR, using the stubs in src/server until lane A replaces them. Never move credit or tickets from client code. Stop after each PR is open.
+**Claude Code (after T1 is merged):**
+> Read AGENTS.md, docs/SPEC.md and docs/PLAN.md. You are lane A. Do A1, then A2, each as its own branch and PR, replacing the stubs in src/server. Keep src/lib/model behaviour and supabase/ unchanged unless a ticket says otherwise. Stop after each PR is open.
 
 **Cross-review (either tool):**
 > Review branch `<branch>` against its ticket in docs/PLAN.md and the rules in AGENTS.md. Run lint, typecheck, test and build. List findings by severity: bugs, RLS or privacy holes, credit or ticket logic outside the allowed places, missing tests. Don't fix anything.
