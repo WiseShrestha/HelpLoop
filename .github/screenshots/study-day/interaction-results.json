@@ -1,0 +1,18 @@
+{
+  "checks": [
+    "English default; session-first initial state",
+    "Open session translates immediately; Escape restores focus and scrolling",
+    "Korean preference persists after reload",
+    "Keyboard arrows, Home and End select working tab panels",
+    "Wallet and profile navigation remain functional",
+    "Teaching-language and study-spot selections, custom options, and live translation retain selected values",
+    "English practice opens with English selected and supports online/public spots",
+    "Helper evidence and book exchange explain planned availability honestly in both languages",
+    "Lower request details work",
+    "Auth error follows selected interface language",
+    "Localized onboarding includes academic-integrity rule",
+    "Language controls work with browser storage blocked",
+    "Supabase Google PKCE handoff and origin-specific callback verified (navigation intercepted)"
+  ],
+  "consoleAndPageErrors": []
+}
