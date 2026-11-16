@@ -76,3 +76,30 @@ select expect_error($$select claim_perk((select id from perks limit 1))$$, 'perk
 select 'leaderboard row for Helper: people_helped = ' || people_helped || ', minutes = ' || minutes_helped || ', rating = ' || avg_rating from helper_stats where display_name = 'Helper';
 reset role;
 select 'money supply = ' || sum(delta) || ' (3 starters 180 − perk 60 = 120)' from ledger;
+
+-- A signed-out caller who knows a live session ID must not be able to cancel it.
+select id as scheduled_session_id from sessions where status = 'scheduled' limit 1 \gset
+set role anon;
+reset request.jwt.claim.sub;
+select expect_error(format('select public.cancel_session(%L::uuid)', :'scheduled_session_id'), 'signed-out caller cannot cancel a known session');
+reset role;
+select case when status = 'scheduled' then 'PASS anonymous attempt leaves session scheduled'
+  else 'FAIL anonymous attempt changed the session' end
+from sessions where id = :'scheduled_session_id'::uuid;
+
+-- Catch future privilege regressions on other privileged RPCs as well.
+do $$ begin
+  if exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'EXECUTE')
+  ) then raise exception 'FAIL anonymous callers can execute a privileged function'; end if;
+  if has_function_privilege('authenticated', 'public.expire_requests()', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.grant_starter()', 'EXECUTE') then
+    raise exception 'FAIL signed-in callers can directly execute internal jobs';
+  end if;
+  if not has_function_privilege('postgres', 'public.expire_requests()', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.expire_requests()', 'EXECUTE') then
+    raise exception 'FAIL scheduler lost permission to expire requests';
+  end if;
+end $$;
