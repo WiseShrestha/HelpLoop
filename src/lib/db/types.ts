@@ -14,22 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_topics: {
+        Row: {
+          course_code: string
+          label_en: string
+          label_ko: string
+          tag: string
+        }
+        ComputedFields: never
+        Insert: {
+          course_code: string
+          label_en: string
+          label_ko: string
+          tag: string
+        }
+        Update: {
+          course_code?: string
+          label_en?: string
+          label_ko?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_topics_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       courses: {
         Row: {
           active: boolean
           code: string
+          kind: string
           name_en: string
           name_ko: string
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           code: string
+          kind?: string
           name_en: string
           name_ko: string
         }
         Update: {
           active?: boolean
           code?: string
+          kind?: string
           name_en?: string
           name_ko?: string
         }
@@ -40,16 +74,17 @@ export type Database = {
           commit_hash: string
           drawn_at: string | null
           id: string
-          prizes: Json
+          prizes: NonNullable<Json>
           seed: string | null
           week_start: string
           winners: Json | null
         }
+        ComputedFields: never
         Insert: {
           commit_hash: string
           drawn_at?: string | null
           id?: string
-          prizes: Json
+          prizes: NonNullable<Json>
           seed?: string | null
           week_start: string
           winners?: Json | null
@@ -58,7 +93,7 @@ export type Database = {
           commit_hash?: string
           drawn_at?: string | null
           id?: string
-          prizes?: Json
+          prizes?: NonNullable<Json>
           seed?: string | null
           week_start?: string
           winners?: Json | null
@@ -69,15 +104,16 @@ export type Database = {
         Row: {
           created_at: string
           id: number
-          payload: Json
+          payload: NonNullable<Json>
           ref_id: string | null
           type: string
           user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: never
-          payload?: Json
+          payload?: NonNullable<Json>
           ref_id?: string | null
           type: string
           user_id?: string | null
@@ -85,12 +121,19 @@ export type Database = {
         Update: {
           created_at?: string
           id?: never
-          payload?: Json
+          payload?: NonNullable<Json>
           ref_id?: string | null
           type?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "events_user_id_fkey"
             columns: ["user_id"]
@@ -117,6 +160,7 @@ export type Database = {
           session_id: string | null
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           delta: number
@@ -147,12 +191,186 @@ export type Database = {
             foreignKeyName: "ledger_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "helper_stats"
             referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "ledger_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loop_bonuses: {
+        Row: {
+          created_at: string
+          loop_key: string
+          members: string[]
+          session_ids: string[]
+          tickets: number
+          user_id: string
+          week_start: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          loop_key: string
+          members: string[]
+          session_ids: string[]
+          tickets: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          loop_key?: string
+          members?: string[]
+          session_ids?: string[]
+          tickets?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loop_bonuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "loop_bonuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "loop_bonuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      open_table_joins: {
+        Row: {
+          joined_at: string
+          table_id: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          joined_at?: string
+          table_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          table_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_table_joins_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "open_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "open_table_joins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "open_table_joins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "open_table_joins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      open_tables: {
+        Row: {
+          course_code: string | null
+          created_at: string
+          ends_at: string
+          host_id: string
+          id: string
+          max_people: number
+          note: string | null
+          place: string
+          starts_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          course_code?: string | null
+          created_at?: string
+          ends_at: string
+          host_id: string
+          id?: string
+          max_people?: number
+          note?: string | null
+          place: string
+          starts_at: string
+        }
+        Update: {
+          course_code?: string | null
+          created_at?: string
+          ends_at?: string
+          host_id?: string
+          id?: string
+          max_people?: number
+          note?: string | null
+          place?: string
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_tables_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "open_tables_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "open_tables_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "open_tables_host_id_fkey"
+            columns: ["host_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -167,6 +385,7 @@ export type Database = {
           status: Database["public"]["Enums"]["claim_status"]
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: string
@@ -193,6 +412,13 @@ export type Database = {
             foreignKeyName: "perk_claims_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "perk_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "helper_stats"
             referencedColumns: ["user_id"]
           },
@@ -211,16 +437,19 @@ export type Database = {
           capacity: number
           cost_minutes: number
           created_at: string
+          department: string | null
           description: string | null
           host_label: string
           id: string
           title: string
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           capacity: number
           cost_minutes: number
           created_at?: string
+          department?: string | null
           description?: string | null
           host_label: string
           id?: string
@@ -231,6 +460,7 @@ export type Database = {
           capacity?: number
           cost_minutes?: number
           created_at?: string
+          department?: string | null
           description?: string | null
           host_label?: string
           id?: string
@@ -245,6 +475,7 @@ export type Database = {
           student_no: string
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           kaist_email?: string | null
           real_name: string
@@ -258,6 +489,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "private_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "private_profiles_user_id_fkey"
             columns: ["user_id"]
@@ -285,7 +523,9 @@ export type Database = {
           help_courses: string[]
           id: string
           is_admin: boolean
+          public_record: boolean
         }
+        ComputedFields: never
         Insert: {
           bio?: string | null
           consent?: boolean
@@ -296,6 +536,7 @@ export type Database = {
           help_courses?: string[]
           id: string
           is_admin?: boolean
+          public_record?: boolean
         }
         Update: {
           bio?: string | null
@@ -307,6 +548,7 @@ export type Database = {
           help_courses?: string[]
           id?: string
           is_admin?: boolean
+          public_record?: boolean
         }
         Relationships: []
       }
@@ -319,6 +561,7 @@ export type Database = {
           resolved_at: string | null
           session_id: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: string
@@ -336,6 +579,13 @@ export type Database = {
           session_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
@@ -367,11 +617,14 @@ export type Database = {
           deadline: string
           details: string | null
           id: string
+          is_anonymous: boolean
           minutes: number
           place: string
           status: Database["public"]["Enums"]["request_status"]
           topic: string
+          topic_tag: string | null
         }
+        ComputedFields: never
         Insert: {
           asker_id: string
           course_code: string
@@ -379,10 +632,12 @@ export type Database = {
           deadline: string
           details?: string | null
           id?: string
+          is_anonymous?: boolean
           minutes: number
           place: string
           status?: Database["public"]["Enums"]["request_status"]
           topic: string
+          topic_tag?: string | null
         }
         Update: {
           asker_id?: string
@@ -391,12 +646,21 @@ export type Database = {
           deadline?: string
           details?: string | null
           id?: string
+          is_anonymous?: boolean
           minutes?: number
           place?: string
           status?: Database["public"]["Enums"]["request_status"]
           topic?: string
+          topic_tag?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "requests_asker_id_fkey"
+            columns: ["asker_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "requests_asker_id_fkey"
             columns: ["asker_id"]
@@ -418,6 +682,13 @@ export type Database = {
             referencedRelation: "courses"
             referencedColumns: ["code"]
           },
+          {
+            foreignKeyName: "requests_course_code_topic_tag_fkey"
+            columns: ["course_code", "topic_tag"]
+            isOneToOne: false
+            referencedRelation: "course_topics"
+            referencedColumns: ["course_code", "tag"]
+          },
         ]
       }
       sessions: {
@@ -437,6 +708,7 @@ export type Database = {
           scheduled_at: string
           status: Database["public"]["Enums"]["session_status"]
         }
+        ComputedFields: never
         Insert: {
           asker_confirmed_at?: string | null
           asker_id: string
@@ -474,6 +746,13 @@ export type Database = {
             foreignKeyName: "sessions_asker_id_fkey"
             columns: ["asker_id"]
             isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sessions_asker_id_fkey"
+            columns: ["asker_id"]
+            isOneToOne: false
             referencedRelation: "helper_stats"
             referencedColumns: ["user_id"]
           },
@@ -483,6 +762,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "sessions_helper_id_fkey"
@@ -502,6 +788,13 @@ export type Database = {
             foreignKeyName: "sessions_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
+            referencedRelation: "request_board"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
             referencedRelation: "requests"
             referencedColumns: ["id"]
           },
@@ -509,15 +802,16 @@ export type Database = {
       }
       ticket_awards: {
         Row: {
-          breakdown: Json
+          breakdown: NonNullable<Json>
           created_at: string
           helper_id: string
           session_id: string
           tickets: number
           week_start: string
         }
+        ComputedFields: never
         Insert: {
-          breakdown: Json
+          breakdown: NonNullable<Json>
           created_at?: string
           helper_id: string
           session_id: string
@@ -525,7 +819,7 @@ export type Database = {
           week_start: string
         }
         Update: {
-          breakdown?: Json
+          breakdown?: NonNullable<Json>
           created_at?: string
           helper_id?: string
           session_id?: string
@@ -533,6 +827,13 @@ export type Database = {
           week_start?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ticket_awards_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_course_stats"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "ticket_awards_helper_id_fkey"
             columns: ["helper_id"]
@@ -558,6 +859,28 @@ export type Database = {
       }
     }
     Views: {
+      helper_course_stats: {
+        Row: {
+          avg_rating: number | null
+          course_code: string | null
+          first_at: string | null
+          last_at: string | null
+          minutes: number | null
+          people_helped: number | null
+          sessions: number | null
+          user_id: string | null
+        }
+        ComputedFields: never
+        Relationships: [
+          {
+            foreignKeyName: "requests_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       helper_stats: {
         Row: {
           avg_rating: number | null
@@ -569,7 +892,94 @@ export type Database = {
           sessions_helped: number | null
           user_id: string | null
         }
+        ComputedFields: never
         Relationships: []
+      }
+      request_board: {
+        Row: {
+          asker_id: string | null
+          course_code: string | null
+          created_at: string | null
+          deadline: string | null
+          details: string | null
+          id: string | null
+          is_anonymous: boolean | null
+          minutes: number | null
+          place: string | null
+          status: Database["public"]["Enums"]["request_status"] | null
+          topic: string | null
+          topic_tag: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          asker_id?: never
+          course_code?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          details?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          minutes?: number | null
+          place?: string | null
+          status?: Database["public"]["Enums"]["request_status"] | null
+          topic?: string | null
+          topic_tag?: string | null
+        }
+        Update: {
+          asker_id?: never
+          course_code?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          details?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          minutes?: number | null
+          place?: string | null
+          status?: Database["public"]["Enums"]["request_status"] | null
+          topic?: string | null
+          topic_tag?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "requests_course_code_topic_tag_fkey"
+            columns: ["course_code", "topic_tag"]
+            isOneToOne: false
+            referencedRelation: "course_topics"
+            referencedColumns: ["course_code", "tag"]
+          },
+        ]
+      }
+      stuck_map: {
+        Row: {
+          course_code: string | null
+          requests: number | null
+          topic_tag: string | null
+          week_start: string | null
+        }
+        ComputedFields: never
+        Relationships: [
+          {
+            foreignKeyName: "requests_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "requests_course_code_topic_tag_fkey"
+            columns: ["course_code", "topic_tag"]
+            isOneToOne: false
+            referencedRelation: "course_topics"
+            referencedColumns: ["course_code", "tag"]
+          },
+        ]
       }
       week_tickets: {
         Row: {
@@ -578,22 +988,8 @@ export type Database = {
           user_id: string | null
           week_start: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_awards_helper_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "helper_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "ticket_awards_helper_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        ComputedFields: never
+        Relationships: []
       }
     }
     Functions: {
@@ -607,12 +1003,15 @@ export type Database = {
         Args: { p_covered?: string; p_rating?: number; p_session: string }
         Returns: Database["public"]["Enums"]["session_status"]
       }
-      expire_requests: { Args: never; Returns: undefined }
-      is_admin: { Args: never; Returns: boolean }
-      my_balance: { Args: never; Returns: number }
-      my_open_request_minutes: { Args: never; Returns: number }
-      overdraft_limit: { Args: never; Returns: number }
-      starter_minutes: { Args: never; Returns: number }
+      expire_requests: { Args: Record<PropertyKey, never>; Returns: undefined }
+      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      my_balance: { Args: Record<PropertyKey, never>; Returns: number }
+      my_open_request_minutes: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      overdraft_limit: { Args: Record<PropertyKey, never>; Returns: number }
+      starter_minutes: { Args: Record<PropertyKey, never>; Returns: number }
     }
     Enums: {
       claim_status: "claimed" | "fulfilled" | "cancelled"
@@ -639,12 +1038,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -668,11 +1067,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -693,11 +1092,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -718,11 +1117,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -735,11 +1134,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

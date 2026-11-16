@@ -12,4 +12,5 @@ done
 out=$(psql -q -v ON_ERROR_STOP=1 -d $DB -f flow_test.sql 2>&1)
 echo "$out"
 if echo "$out" | grep -q "FAIL"; then echo "DB TESTS FAILED"; exit 1; fi
+bash capacity_concurrency.sh
 echo "DB TESTS PASSED"

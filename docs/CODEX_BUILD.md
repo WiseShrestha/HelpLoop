@@ -2,6 +2,8 @@
 
 **For Codex.** You are now the only builder of this repo. Read this file, `AGENTS.md`, `docs/SPEC.md` and `docs/PLAN.md`, then work through the tickets below **one at a time, in this order**. Each ticket = one branch = one pull request. After opening each PR, stop and wait: a human merges it after Claude Code reviews it. Then pull main and start the next ticket.
 
+**Active extension:** Read [CODEX_FEATURES.md](CODEX_FEATURES.md) with this guide. Its §2 replaces the ticket order and adds features to the affected tickets.
+
 **Deadline:** real students start using the app on **Wed 18 Nov, 12:00 KST**. Tickets 1–8 must be merged by then. Reliability beats features.
 
 ## What changed from AGENTS.md
