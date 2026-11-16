@@ -1,0 +1,766 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18"
+  }
+  public: {
+    Tables: {
+      courses: {
+        Row: {
+          active: boolean
+          code: string
+          name_en: string
+          name_ko: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          name_en: string
+          name_ko: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          name_en?: string
+          name_ko?: string
+        }
+        Relationships: []
+      }
+      draws: {
+        Row: {
+          commit_hash: string
+          drawn_at: string | null
+          id: string
+          prizes: Json
+          seed: string | null
+          week_start: string
+          winners: Json | null
+        }
+        Insert: {
+          commit_hash: string
+          drawn_at?: string | null
+          id?: string
+          prizes: Json
+          seed?: string | null
+          week_start: string
+          winners?: Json | null
+        }
+        Update: {
+          commit_hash?: string
+          drawn_at?: string | null
+          id?: string
+          prizes?: Json
+          seed?: string | null
+          week_start?: string
+          winners?: Json | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          id: number
+          payload: Json
+          ref_id: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          payload?: Json
+          ref_id?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          payload?: Json
+          ref_id?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger: {
+        Row: {
+          created_at: string
+          delta: number
+          id: number
+          perk_claim_id: string | null
+          reason: Database["public"]["Enums"]["ledger_reason"]
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: never
+          perk_claim_id?: string | null
+          reason: Database["public"]["Enums"]["ledger_reason"]
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: never
+          perk_claim_id?: string | null
+          reason?: Database["public"]["Enums"]["ledger_reason"]
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perk_claims: {
+        Row: {
+          created_at: string
+          id: string
+          perk_id: string
+          status: Database["public"]["Enums"]["claim_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perk_id: string
+          status?: Database["public"]["Enums"]["claim_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perk_id?: string
+          status?: Database["public"]["Enums"]["claim_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perk_claims_perk_id_fkey"
+            columns: ["perk_id"]
+            isOneToOne: false
+            referencedRelation: "perks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perk_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "perk_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perks: {
+        Row: {
+          active: boolean
+          capacity: number
+          cost_minutes: number
+          created_at: string
+          description: string | null
+          host_label: string
+          id: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          capacity: number
+          cost_minutes: number
+          created_at?: string
+          description?: string | null
+          host_label: string
+          id?: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          capacity?: number
+          cost_minutes?: number
+          created_at?: string
+          description?: string | null
+          host_label?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      private_profiles: {
+        Row: {
+          kaist_email: string | null
+          real_name: string
+          student_no: string
+          user_id: string
+        }
+        Insert: {
+          kaist_email?: string | null
+          real_name: string
+          student_no: string
+          user_id: string
+        }
+        Update: {
+          kaist_email?: string | null
+          real_name?: string
+          student_no?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "private_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          consent: boolean
+          created_at: string
+          department: string
+          display_name: string
+          entry_year: number
+          help_courses: string[]
+          id: string
+          is_admin: boolean
+        }
+        Insert: {
+          bio?: string | null
+          consent?: boolean
+          created_at?: string
+          department?: string
+          display_name: string
+          entry_year: number
+          help_courses?: string[]
+          id: string
+          is_admin?: boolean
+        }
+        Update: {
+          bio?: string | null
+          consent?: boolean
+          created_at?: string
+          department?: string
+          display_name?: string
+          entry_year?: number
+          help_courses?: string[]
+          id?: string
+          is_admin?: boolean
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reporter_id: string
+          resolved_at: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reporter_id: string
+          resolved_at?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          asker_id: string
+          course_code: string
+          created_at: string
+          deadline: string
+          details: string | null
+          id: string
+          minutes: number
+          place: string
+          status: Database["public"]["Enums"]["request_status"]
+          topic: string
+        }
+        Insert: {
+          asker_id: string
+          course_code: string
+          created_at?: string
+          deadline: string
+          details?: string | null
+          id?: string
+          minutes: number
+          place: string
+          status?: Database["public"]["Enums"]["request_status"]
+          topic: string
+        }
+        Update: {
+          asker_id?: string
+          course_code?: string
+          created_at?: string
+          deadline?: string
+          details?: string | null
+          id?: string
+          minutes?: number
+          place?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_asker_id_fkey"
+            columns: ["asker_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "requests_asker_id_fkey"
+            columns: ["asker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          asker_confirmed_at: string | null
+          asker_id: string
+          completed_at: string | null
+          covered: string | null
+          created_at: string
+          helper_confirmed_at: string | null
+          helper_id: string
+          id: string
+          minutes: number
+          place: string
+          rating: number | null
+          request_id: string
+          scheduled_at: string
+          status: Database["public"]["Enums"]["session_status"]
+        }
+        Insert: {
+          asker_confirmed_at?: string | null
+          asker_id: string
+          completed_at?: string | null
+          covered?: string | null
+          created_at?: string
+          helper_confirmed_at?: string | null
+          helper_id: string
+          id?: string
+          minutes: number
+          place: string
+          rating?: number | null
+          request_id: string
+          scheduled_at: string
+          status?: Database["public"]["Enums"]["session_status"]
+        }
+        Update: {
+          asker_confirmed_at?: string | null
+          asker_id?: string
+          completed_at?: string | null
+          covered?: string | null
+          created_at?: string
+          helper_confirmed_at?: string | null
+          helper_id?: string
+          id?: string
+          minutes?: number
+          place?: string
+          rating?: number | null
+          request_id?: string
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_asker_id_fkey"
+            columns: ["asker_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sessions_asker_id_fkey"
+            columns: ["asker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sessions_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_awards: {
+        Row: {
+          breakdown: Json
+          created_at: string
+          helper_id: string
+          session_id: string
+          tickets: number
+          week_start: string
+        }
+        Insert: {
+          breakdown: Json
+          created_at?: string
+          helper_id: string
+          session_id: string
+          tickets: number
+          week_start: string
+        }
+        Update: {
+          breakdown?: Json
+          created_at?: string
+          helper_id?: string
+          session_id?: string
+          tickets?: number
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_awards_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ticket_awards_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_awards_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      helper_stats: {
+        Row: {
+          avg_rating: number | null
+          department: string | null
+          display_name: string | null
+          entry_year: number | null
+          minutes_helped: number | null
+          people_helped: number | null
+          sessions_helped: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      week_tickets: {
+        Row: {
+          display_name: string | null
+          tickets: number | null
+          user_id: string | null
+          week_start: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_awards_helper_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "helper_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ticket_awards_helper_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      accept_request: {
+        Args: { p_place: string; p_request: string; p_scheduled_at: string }
+        Returns: string
+      }
+      cancel_session: { Args: { p_session: string }; Returns: undefined }
+      claim_perk: { Args: { p_perk: string }; Returns: string }
+      confirm_session: {
+        Args: { p_covered?: string; p_rating?: number; p_session: string }
+        Returns: Database["public"]["Enums"]["session_status"]
+      }
+      expire_requests: { Args: never; Returns: undefined }
+      is_admin: { Args: never; Returns: boolean }
+      my_balance: { Args: never; Returns: number }
+      my_open_request_minutes: { Args: never; Returns: number }
+      overdraft_limit: { Args: never; Returns: number }
+      starter_minutes: { Args: never; Returns: number }
+    }
+    Enums: {
+      claim_status: "claimed" | "fulfilled" | "cancelled"
+      ledger_reason:
+        | "starter"
+        | "session_earned"
+        | "session_spent"
+        | "perk"
+        | "admin"
+      request_status: "open" | "matched" | "completed" | "cancelled" | "expired"
+      session_status: "scheduled" | "completed" | "cancelled" | "disputed"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      claim_status: ["claimed", "fulfilled", "cancelled"],
+      ledger_reason: [
+        "starter",
+        "session_earned",
+        "session_spent",
+        "perk",
+        "admin",
+      ],
+      request_status: ["open", "matched", "completed", "cancelled", "expired"],
+      session_status: ["scheduled", "completed", "cancelled", "disputed"],
+    },
+  },
+} as const
