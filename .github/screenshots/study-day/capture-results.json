@@ -1,0 +1,50 @@
+[
+  {
+    "width": 320,
+    "lang": "en",
+    "pageWidth": 320,
+    "viewport": 320,
+    "fonts": "loaded",
+    "errors": []
+  },
+  {
+    "width": 320,
+    "lang": "ko",
+    "pageWidth": 320,
+    "viewport": 320,
+    "fonts": "loaded",
+    "errors": []
+  },
+  {
+    "width": 375,
+    "lang": "en",
+    "pageWidth": 375,
+    "viewport": 375,
+    "fonts": "loaded",
+    "errors": []
+  },
+  {
+    "width": 375,
+    "lang": "ko",
+    "pageWidth": 375,
+    "viewport": 375,
+    "fonts": "loaded",
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "lang": "en",
+    "pageWidth": 1280,
+    "viewport": 1280,
+    "fonts": "loaded",
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "lang": "ko",
+    "pageWidth": 1280,
+    "viewport": 1280,
+    "fonts": "loaded",
+    "errors": []
+  }
+]

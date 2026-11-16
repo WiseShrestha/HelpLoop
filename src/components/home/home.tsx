@@ -6,32 +6,39 @@ import { useEffect, useRef, useState } from "react";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { useLanguage } from "@/components/locale";
 import { copy } from "./copy";
+import { CampusExplore, CampusDetails, StudyPreferences, campusCopy, type CampusPanel } from "./campus";
 import styles from "./home.module.css";
 import logo from "./assets/loop-mark.png";
 import notebooks from "./assets/notebook-loop.png";
 import google from "./assets/google.svg";
 import clock from "./assets/icons/clock.svg";
-import people from "./assets/icons/people.svg";
 import home from "./assets/icons/home.svg";
 import wallet from "./assets/icons/wallet.svg";
 import profile from "./assets/icons/profile.svg";
 import chevron from "./assets/icons/chevron.svg";
 import plus from "./assets/icons/plus.svg";
 import close from "./assets/icons/close.svg";
-import book from "./assets/icons/book.svg";
+import calendar from "./assets/icons/calendar.svg";
+import location from "./assets/icons/location.svg";
+import connection from "./assets/icons/connection.svg";
+import arrow from "./assets/icons/arrow.svg";
 
-type Panel = "request" | "ask" | "wallet" | "profile" | null;
+type Panel = "request" | "session" | "ask" | "wallet" | "profile" | CampusPanel | null;
 
-export function HomeScreen({ configured, authError = false, onboarding = false }: {
-  configured: boolean; authError?: boolean; onboarding?: boolean;
+export function HomeScreen({ configured, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
+  configured: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
 }) {
   const [language, setLanguage] = useLanguage();
   const t = copy[language];
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(2);
   const [panel, setPanel] = useState<Panel>(null);
   const [request, setRequest] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const sampleDate = new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-GB", {
+    timeZone: "Asia/Seoul", weekday: "short", month: "short", day: "numeric",
+  }).format(new Date(exampleSessionAt));
+
   useEffect(() => {
     if (!panel) return;
     const overflow = document.body.style.overflow;
@@ -39,14 +46,13 @@ export function HomeScreen({ configured, authError = false, onboarding = false }
     if (!dialog.current?.open) dialog.current?.showModal();
     return () => { document.body.style.overflow = overflow; };
   }, [panel]);
-  useEffect(() => {
-    document.title = language === "ko" ? "HelpLoop | 공부품앗이" : "HelpLoop | Study together";
-  }, [language]);
+  useEffect(() => { document.title = language === "ko" ? "HelpLoop | 공부품앗이" : "HelpLoop | Study together"; }, [language]);
 
   function openRequest(index: number) { setRequest(index); setPanel("request"); }
   const auth = (label = t.signIn as string, variant = styles.googleButton) => <GoogleSignIn configured={configured} language={language} label={label} className={variant} />;
   const icon = (src: string, size = 22) => <Image src={src} alt="" width={size} height={size} className={styles.icon} />;
-  const panelTitle = panel === "request" ? t.topics[request] : panel === "ask" ? t.askTitle : panel === "wallet" ? t.walletTitle : t.profileTitle;
+  const c = campusCopy[language];
+  const panelTitle = panel === "practice" ? c.practiceHeading : panel === "books" ? c.booksHeading : panel === "trust" ? c.trustHeading : panel === "session" ? t.sessionTopic : panel === "request" ? t.topics[request] : panel === "ask" ? t.askTitle : panel === "wallet" ? t.walletTitle : t.profileTitle;
   const languageControl = <div className={styles.language} role="group" aria-label={t.language}>
     <button type="button" lang="en" aria-label="English" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
     <button type="button" lang="ko" aria-label="한국어" aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>한국어</button>
@@ -55,67 +61,86 @@ export function HomeScreen({ configured, authError = false, onboarding = false }
   return (
     <main className={styles.app} lang={language}>
       <a href="#help-feed" className={styles.skip}>{t.skip}</a>
-      <header className={styles.masthead}>
-        <Link className={styles.brand} href="/" aria-label="HelpLoop">
-          <Image src={logo} alt="" width={44} height={44} priority />
-          <span><strong>HelpLoop</strong><span>{t.brand}</span></span>
-        </Link>
-        {!onboarding && <nav aria-label={t.navigation} className={styles.navigation}>
-          {t.nav.map((label, i) => <button key={i} type="button" aria-current={i === 0 && !panel ? "page" : undefined}
-            onClick={() => i === 0 ? (setTab(0), window.scrollTo({ top: 0, behavior: "smooth" })) : setPanel(i === 1 ? "wallet" : "profile")}>
-            {icon([home, wallet, profile][i], 25)}<span>{label}</span>
-          </button>)}
-        </nav>}
-        {languageControl}
-        {!onboarding && <button type="button" className={styles.account} aria-label={t.account} onClick={() => setPanel("profile")}>{icon(profile)}</button>}
-      </header>
+      <div className={styles.darkSurface}>
+        <header className={styles.masthead}>
+          <Link className={styles.brand} href="/" aria-label="HelpLoop">
+            <Image src={logo} alt="" width={42} height={28} priority />
+            <span><strong>HelpLoop</strong><span>{t.brand}</span></span>
+          </Link>
+          {!onboarding && <nav aria-label={t.navigation} className={styles.navigation}>
+            {t.nav.map((label, i) => <button key={i} type="button" aria-current={i === 0 && !panel ? "page" : undefined}
+              onClick={() => i === 0 ? (setTab(2), window.scrollTo({ top: 0, behavior: "smooth" })) : setPanel(i === 1 ? "wallet" : "profile")}>
+              {icon([home, wallet, profile][i], 24)}<span>{label}</span>
+            </button>)}
+          </nav>}
+          {languageControl}
+          {!onboarding && <button type="button" className={styles.account} aria-label={t.account} onClick={() => setPanel("profile")}>{icon(profile)}</button>}
+        </header>
 
-      {onboarding ? <section className={styles.onboarding}>
-        <Image src={notebooks} alt="" width={260} height={174} priority />
-        <h1>{t.onboardingTitle}</h1><p>{t.onboardingBody}</p>
-      </section> : <div className={styles.layout}>
-        <section className={styles.hero} aria-labelledby="home-heading">
-          <h1 id="home-heading">{t.hero[0]}<br />{t.hero[1]}</h1>
-          <p>{t.subtitle}</p>
-          <Image className={styles.heroArt} src={notebooks} alt="" width={300} height={200} priority sizes="(min-width: 800px) 300px, 160px" />
-        </section>
-        <button type="button" className={styles.credits} onClick={() => setPanel("wallet")} aria-label={t.creditLabel}>
-          {icon(clock, 28)}<span className={styles.balance}><strong>{language === "ko" ? "60분" : "60 min"}</strong><span>{t.credits}</span></span>
-          <span className={styles.creditRule}>{t.creditRule[0]}<br />{t.creditRule[1]}</span>
-          <span className={styles.demo}>{t.demo}</span>
-        </button>
-        <section className={styles.workbench} id="help-feed" tabIndex={-1}>
-          <div className={styles.tabs} role="tablist" aria-label={language === "en" ? "Study exchange" : "공부품앗이"}>
-            {t.tabs.map((label, i) => <button type="button" key={i} ref={el => { tabs.current[i] = el; }}
-              role="tab" id={`tab-${i}`} aria-controls="home-panel" aria-selected={tab === i} tabIndex={tab === i ? 0 : -1}
-              onClick={() => setTab(i)} onKeyDown={e => {
-                const next = e.key === "ArrowRight" ? (i + 1) % 3 : e.key === "ArrowLeft" ? (i + 2) % 3 : e.key === "Home" ? 0 : e.key === "End" ? 2 : null;
-                if (next !== null) { e.preventDefault(); setTab(next); tabs.current[next]?.focus(); }
-              }}>{label}</button>)}
+        {onboarding ? <section className={styles.onboarding}>
+          <Image src={notebooks} alt="" width={260} height={174} priority />
+          <h1>{t.onboardingTitle}</h1><p>{t.onboardingBody}</p>
+          <p className={styles.houseRule}>{t.houseRule}</p>
+        </section> : <div className={styles.darkLayout}>
+          <section className={styles.hero} aria-labelledby="home-heading">
+            <h1 id="home-heading">{t.hero.map((line, i) => <span key={i}>{line}</span>)}</h1>
+            <p>{t.subtitle}</p>
+            <button type="button" className={styles.credits} onClick={() => setPanel("wallet")} aria-label={t.creditLabel}>
+              <strong>{language === "ko" ? "60분" : "60 min"}</strong><span>{t.credits}</span>
+            </button>
+            <Image className={styles.heroArt} src={notebooks} alt="" width={300} height={200} priority sizes="(min-width: 900px) 280px, 170px" />
+          </section>
+          <section className={styles.workbench}>
+            <div className={styles.tabs} role="tablist" aria-label={language === "en" ? "Study exchange" : "공부품앗이"}>
+              {t.tabs.map((label, i) => <button type="button" key={i} ref={el => { tabs.current[i] = el; }}
+                role="tab" id={"tab-" + i} aria-controls="home-panel" aria-selected={tab === i} tabIndex={tab === i ? 0 : -1}
+                onClick={() => setTab(i)} onKeyDown={e => {
+                  const next = e.key === "ArrowRight" ? (i + 1) % 3 : e.key === "ArrowLeft" ? (i + 2) % 3 : e.key === "Home" ? 0 : e.key === "End" ? 2 : null;
+                  if (next !== null) { e.preventDefault(); setTab(next); tabs.current[next]?.focus(); }
+                }}>{label}</button>)}
+            </div>
+            {authError && <p className={styles.error} role="alert">{t.authError}</p>}
+            <div id="home-panel" role="tabpanel" aria-labelledby={"tab-" + tab} className={styles.tabPanel}>
+              {tab === 2 ? <section className={styles.session} aria-labelledby="session-title">
+                <span className={styles.eyebrow}>{t.nextSession}</span>
+                <h2 id="session-title">{t.courses[0]}</h2><p className={styles.sessionTopic}>{t.sessionTopic}</p>
+                <div className={styles.partner}>
+                  <div className={styles.pair} aria-hidden="true"><span>K</span>{icon(connection, 26)}<span>M</span></div>
+                  <p>{t.withPartner}</p>
+                </div>
+                <div className={styles.sessionMeta}>
+                  <div>{icon(calendar, 24)}<p><strong>{t.sessionTime}</strong><small><time dateTime={exampleSessionAt}>{sampleDate}</time> · {t.duration}</small></p></div>
+                  <div>{icon(location, 24)}<p><strong>{t.sessionPlace}</strong><small>{t.publicPlace}</small></p></div>
+                </div>
+                <button type="button" className={styles.primary} onClick={() => setPanel("session")}>{t.viewSession}{icon(arrow, 24)}</button>
+              </section> : tab === 0 ? <section className={styles.highlightRequest}>
+                <span className={styles.eyebrow}>{t.courses[0]}</span><h2>{t.topics[0]}</h2><p>{t.places[0]}</p>
+                <p className={styles.matchedPerson}>{t.person}</p>
+                <button type="button" className={styles.primary} onClick={() => openRequest(0)}>{t.help}{icon(arrow, 24)}</button>
+              </section> : <section className={styles.empty}>
+                <h2>{t.requestEmpty}</h2><p>{t.requestEmptyBody}</p>
+                <button type="button" className={styles.primary} onClick={() => setPanel("ask")}>{t.ask}{icon(arrow, 24)}</button>
+              </section>}
+            </div>
+          </section>
+        </div>}
+      </div>
+
+      {!onboarding && <div className={styles.lightSurface}>
+        <section className={styles.support} id="help-feed" tabIndex={-1}>
+          <p className={styles.sample}>{t.sample}</p>
+          <div className={styles.feedHeading}><h2>{t.feed}</h2><button type="button" className={styles.ask} onClick={() => setPanel("ask")}>{t.ask}{icon(plus, 16)}</button></div>
+          <div className={styles.requestList}>
+            {[1, 2].map((index) => <article className={styles.requestRow} key={index}>
+              <span className={styles.avatar} aria-hidden="true">{index === 1 ? "J" : "S"}</span>
+              <div className={styles.requestCopy}><h3>{t.courses[index]}</h3><p>{t.topics[index]}</p><small>{t.places[index]}</small></div>
+              <span className={styles.newPerson}>{t.newPerson}</span>
+              <button type="button" className={styles.requestOpen} aria-label={t.openRequest + ": " + t.topics[index]} onClick={() => openRequest(index)}>{icon(chevron, 22)}</button>
+            </article>)}
           </div>
-          {authError && <p className={styles.error} role="alert">{t.authError}</p>}
-          <div id="home-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className={styles.tabPanel}>
-            {tab === 0 ? <>
-              <div className={styles.feedHeading}><h2>{t.feed}</h2><button type="button" className={styles.ask} onClick={() => setPanel("ask")}>{t.ask}{icon(plus, 17)}</button></div>
-              <article className={styles.request}>
-                <span className={styles.course}>{t.courses[0]}</span><h3>{t.topics[0]}</h3><p className={styles.meta}>{t.places[0]}</p>
-                <div className={styles.person}><span className={styles.avatar} aria-hidden="true">M</span><span>{t.person}</span></div>
-                <div className={styles.reasons}><span>{icon(clock, 17)}{t.due}</span><span>{icon(people, 18)}{t.newPerson}</span></div>
-                <button type="button" className={styles.help} onClick={() => openRequest(0)}>{t.help}</button>
-              </article>
-              <article className={styles.secondaryRequest}>
-                <span className={styles.course}>{t.courses[1]}</span>
-                <h3><button type="button" onClick={() => openRequest(1)} aria-label={`${t.openRequest}: ${t.topics[1]}`}>{t.topics[1]}{icon(chevron, 25)}</button></h3>
-                <p className={styles.meta}>{t.places[1]}</p>
-              </article><p className={styles.sample}>{t.sample}</p>
-            </> : <div className={styles.empty}>
-              {icon(book, 38)}<h2>{tab === 1 ? t.requestEmpty : t.sessionEmpty}</h2><p>{tab === 1 ? t.requestEmptyBody : t.sessionEmptyBody}</p>
-              <button type="button" className={styles.help} onClick={() => tab === 1 ? setPanel("ask") : setTab(0)}>{tab === 1 ? t.ask : t.browse}</button>
-            </div>}
-          </div>
         </section>
+        <CampusExplore language={language} onAsk={() => setPanel("ask")} onOpen={setPanel} />
         <aside className={styles.join}>
-          <h2>{t.welcome}</h2><p>{t.welcomeBody}</p>
           <div className={styles.googleEntry}><Image src={google} alt="" width={20} height={20} />{auth()}</div>
           <p className={styles.houseRule}>{t.houseRule}</p><p className={styles.safety}>{t.safety}</p>
         </aside>
@@ -126,12 +151,15 @@ export function HomeScreen({ configured, authError = false, onboarding = false }
         <div className={styles.dialogBody}>
           <div className={styles.dialogLanguage}>{languageControl}</div>
           <button type="button" className={styles.close} aria-label={t.close} onClick={() => dialog.current?.close()}>{icon(close)}</button>
-          {panel === "request" && <span className={styles.course}>{t.courses[request]}</span>}
+          {(panel === "request" || panel === "session") && <span className={styles.course}>{t.courses[panel === "session" ? 0 : request]}</span>}
           <h2 id="dialog-heading">{panelTitle}</h2>
-          <p>{panel === "request" ? t.detail : panel === "ask" ? t.askBody : panel === "wallet" ? t.walletBody : t.profileBody}</p>
-          {panel === "request" && <><p className={styles.dialogPlace}>{icon(clock)}{t.places[request]}</p><p className={styles.sample}>{t.requestNote}</p></>}
-          <p className={styles.houseRule}>{t.houseRule}</p>
-          {auth(panel === "request" ? t.signInToHelp : panel === "ask" ? t.signInToAsk : t.signIn, styles.help)}
+          {panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : panel === "wallet" ? t.walletBody : t.profileBody}</p>}
+          {panel === "ask" && <StudyPreferences language={language} />}
+          {(panel === "request" || panel === "session") && <><p className={styles.dialogPlace}>{icon(clock)}{t.places[panel === "session" ? 0 : request]}</p>
+            {panel === "session" && <p><time dateTime={exampleSessionAt}>{t.sessionTime} · {sampleDate}</time></p>}
+            <p className={styles.sample}>{panel === "session" ? t.sessionNote : t.requestNote}</p></>}
+          {panel !== "books" && <p className={styles.houseRule}>{t.houseRule}</p>}
+          {panel !== "books" && panel !== "trust" && auth(panel === "request" ? t.signInToHelp : panel === "ask" ? t.signInToAsk : t.signIn, styles.primary)}
         </div>
       </dialog>
     </main>
