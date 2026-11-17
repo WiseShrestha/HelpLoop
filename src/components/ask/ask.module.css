@@ -1,0 +1,28 @@
+.header, .layout { max-width: 680px; }
+.layout { margin: auto; padding: 24px 16px; }
+.layout h1 { font-size: clamp(26px, 6vw, 36px); font-weight: 800; margin-bottom: 4px; }
+.layout > p, .gate > p { color: var(--muted); }
+.gate, .form { margin-top: 20px; }
+.gate > p { margin-bottom: 12px; }
+.credit { background: var(--mint); border-radius: 16px; padding: 14px; margin-top: 16px; }
+.credit dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
+.credit dt, .credit small { font-size: 12px; }
+.credit dd { font-weight: 800; font-size: 18px; margin: 2px 0 0; }
+.controls { padding: 0; border: 0; min-inline-size: 0; }
+.controls > label { display: block; font-weight: 800; margin: 16px 0 6px; }
+.controls > :is(input, select, textarea) {
+  font: inherit; font-size: 16px; color: var(--ink); background: white; min-height: 46px;
+  width: 100%; min-width: 0; max-width: 100%; border: 1px solid #aaa7b1; border-radius: 9px; padding: 9px 10px;
+}
+.controls > :is(input, select, textarea)[aria-invalid="true"] { border-color: #9d2139; }
+.spots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.spots button { border: 1px solid #aaa7b1; border-radius: 24px; min-height: 40px; padding: 5px 12px; }
+.controls .anonymous { display: flex; align-items: flex-start; gap: 10px; background: #efe8fa; border-radius: 12px; padding: 12px; margin: 22px 0 16px; }
+.anonymous input { accent-color: #684294; flex: none; width: 20px; height: 20px; }
+.anonymous small { font-size: 13px; display: block; margin-top: 4px; font-weight: 400; }
+.controls .rule { border-left: 3px solid #9165bc; padding-left: 12px; margin: 18px 0; font-size: 13px; }
+.feedback:empty { display: none; }
+.feedback { margin-top: 14px; }
+.feedback [role="status"] { background: var(--mint); padding: 10px; border-radius: 8px; }
+.feedback [role="alert"], .controls .warning { color: #9d2139; margin-top: 6px; font-size: 13px; }
+.controls button:disabled { cursor: not-allowed; }

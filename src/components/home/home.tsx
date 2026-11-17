@@ -119,7 +119,7 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
                 <button type="button" className={styles.primary} onClick={() => openRequest(0)}>{t.help}{icon(arrow, 24)}</button>
               </section> : <section className={styles.empty}>
                 <h2>{t.requestEmpty}</h2><p>{t.requestEmptyBody}</p>
-                <button type="button" className={styles.primary} onClick={() => setPanel("ask")}>{t.ask}{icon(arrow, 24)}</button>
+                <Link className={styles.primary} href="/ask">{t.ask}{icon(arrow, 24)}</Link>
               </section>}
             </div>
           </section>
@@ -129,7 +129,7 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
       {!onboarding && <div className={styles.lightSurface}>
         <section className={styles.support} id="help-feed" tabIndex={-1}>
           <p className={styles.sample}>{t.sample}</p>
-          <div className={styles.feedHeading}><h2>{t.feed}</h2><button type="button" className={styles.ask} onClick={() => setPanel("ask")}>{t.ask}{icon(plus, 16)}</button></div>
+          <div className={styles.feedHeading}><h2>{t.feed}</h2><Link className={styles.ask} href="/ask">{t.ask}{icon(plus, 16)}</Link></div>
           <div className={styles.requestList}>
             {[1, 2].map((index) => <article className={styles.requestRow} key={index}>
               <span className={styles.avatar} aria-hidden="true">{index === 1 ? "J" : "S"}</span>
@@ -159,7 +159,8 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
             {panel === "session" && <p><time dateTime={exampleSessionAt}>{t.sessionTime} · {sampleDate}</time></p>}
             <p className={styles.sample}>{panel === "session" ? t.sessionNote : t.requestNote}</p></>}
           {panel !== "books" && <p className={styles.houseRule}>{t.houseRule}</p>}
-          {panel !== "books" && panel !== "trust" && auth(panel === "request" ? t.signInToHelp : panel === "ask" ? t.signInToAsk : t.signIn, styles.primary)}
+          {panel === "ask" ? <Link className={styles.primary} href="/ask">{t.ask}</Link>
+            : panel !== "books" && panel !== "trust" && auth(panel === "request" ? t.signInToHelp : t.signIn, styles.primary)}
         </div>
       </dialog>
     </main>
