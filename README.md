@@ -1,4 +1,4 @@
-# 공부품앗이 (Gongbu Pumasi)
+# HelpLoop
 
 Help one, get helped by one, and meet someone new each time. A study-help exchange for KAIST students: helping earns time-bank credits and weekly lottery tickets, with a bonus for helping someone new.
 
