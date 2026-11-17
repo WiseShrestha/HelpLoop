@@ -78,6 +78,8 @@ export async function recomputeWeek(store: RewardsStore, callerId: string, weekS
   if (!(await store.isAdmin(callerId))) throw new RewardsError("Admins only");
 
   const start = weekStartKST(weekStart);
+  // Capture cleanup candidates before reading completions. Later awards belong to their writers.
+  const existingAwardIds = await store.weekAwardIds(kstDate(start));
   const history = (await store.completedBefore(new Date(start.getTime() + 7 * DAY_MS))).map(toCompleted);
   const byId = new Map(history.map((s) => [s.id, s]));
   const rows = sessionTickets(history)
@@ -87,7 +89,7 @@ export async function recomputeWeek(store: RewardsStore, callerId: string, weekS
   await store.upsertAwards(rows);
   // ticket_awards is a cache: drop awards for sessions no longer completed (e.g. disputed).
   const keep = new Set(rows.map((r) => r.session_id));
-  const stale = (await store.weekAwardIds(kstDate(start))).filter((id) => !keep.has(id));
+  const stale = existingAwardIds.filter((id) => !keep.has(id));
   if (stale.length) await store.deleteAwards(stale);
   return rows.length;
 }
