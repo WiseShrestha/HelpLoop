@@ -1,0 +1,44 @@
+.page { padding-bottom: 0; }
+.layout { max-width: 1080px; margin: auto; }
+.intro { background: var(--ink); color: white; padding: 28px 20px; position: relative; }
+.badge { color: var(--mint); font-size: 10px; letter-spacing: 1.5px; font-weight: 800; }
+.intro h1 { font-size: 30px; font-weight: 800; line-height: 1.2; letter-spacing: -1px; white-space: pre-line; margin: 16px 0; }
+.intro > p { max-width: 32em; color: #e0d7eb; font-size: 14px; }
+.intro > img { width: 150px; height: 100px; display: block; margin: 14px 0 8px auto; }
+.intro .grant { color: var(--mint); font-size: 12px; }
+.form, .gate { padding: 8px 20px 36px; }
+.controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.section { border-bottom: 1px solid var(--line); padding: 24px 0; }
+.section h2 { font-size: 19px; font-weight: 800; display: flex; gap: 10px; align-items: baseline; letter-spacing: -.5px; }
+.section h2 > span { color: #6b3d99; font-size: 12px; letter-spacing: 0; }
+.section > p { font-size: 12px; color: var(--muted); margin: 8px 0 18px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px 12px; }
+.grid label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; min-width: 0; }
+.grid small { color: var(--muted); font-weight: 400; }
+.full, .grid label:has(input[type="email"], input[name="department"]) { grid-column: 1/-1; }
+.grid input { box-sizing: border-box; width: 100%; min-height: 46px; border: 1px solid #aaa7b1; border-radius: 8px; padding: 10px; color: var(--ink); background: white; font: inherit; font-size: 16px; font-weight: 400; }
+.grid input[aria-invalid="true"] { border: 2px solid #a42840; }
+.topics { border: 0; padding: 0; margin: 18px 0; min-width: 0; }
+.topics legend { font-size: 13px; font-weight: 800; margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { display: flex; cursor: pointer; position: relative; max-width: 100%; }
+.chips input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chips span { border: 1px solid #aaa7b1; border-radius: 20px; padding: 10px 13px; font-size: 12px; background: white; }
+.chips input:checked + span { background: var(--mint); border-color: #578d77; font-weight: 800; }
+.chips input:focus-visible + span { outline: 3px solid #9663cb; outline-offset: 3px; }
+.section > small { color: var(--muted); font-size: 12px; }
+.agreements { padding: 24px 0 0; }
+.agreements > p { border-left: 3px solid #9165bc; padding-left: 12px; font-size: 14px; font-weight: 700; margin-bottom: 18px; }
+.agreements label { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; margin: 12px 0; }
+.agreements input { flex-shrink: 0; height: 20px; width: 20px; margin: 0; accent-color: #684294; }
+.message { font-size: 13px; color: #9d2139; margin: 14px 0; }
+.submit { color: var(--ink) !important; margin-top: 14px; width: 100%; min-height: 52px; }
+.gate { padding-top: 32px; }
+.gate h2 { font-size: 18px; margin-bottom: 24px; }
+@media (min-width: 800px) {
+  .layout { display: grid; grid-template-columns: 360px minmax(0,1fr); gap: 60px; padding: 44px 24px; align-items: start; }
+  .intro { border-radius: 18px; padding: 32px; position: sticky; top: 30px; }
+  .intro h1 { font-size: 34px; }
+  .intro > img { width: 240px; height: 160px; margin: 28px auto; }
+  .form, .gate { padding: 0 0 32px; }
+}

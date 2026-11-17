@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-public-key");
   mocks.getUser.mockResolvedValue({ data: { user: { id: "student" } } });
-  mocks.profile.mockResolvedValue({ data: { id: "student" }, error: null });
+  mocks.profile.mockResolvedValue({ data: { id: "student", consent: true }, error: null });
   mocks.eq.mockReturnValue({ maybeSingle: mocks.profile });
   mocks.select.mockReturnValue({ eq: mocks.eq });
   mocks.from.mockReturnValue({ select: mocks.select });
@@ -54,6 +54,17 @@ describe("session routing", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-request-cookie")).toContain("session=refreshed");
+  });
+  it("keeps a partial signup on onboarding until private identity is saved", async () => {
+    mocks.profile.mockResolvedValueOnce({ data: { id: "student", consent: true }, error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
+    const response = await proxy(new NextRequest("https://preview.example/"));
+    expect(response.headers.get("location")).toBe("https://preview.example/onboarding");
+  });
+  it("requires consent even when both profile rows exist", async () => {
+    mocks.profile.mockResolvedValueOnce({ data: { id: "student", consent: false }, error: null });
+    const response = await proxy(new NextRequest("https://preview.example/"));
+    expect(response.headers.get("location")).toBe("https://preview.example/onboarding");
   });
   it("does not loop on onboarding or interfere with the OAuth code exchange", async () => {
     await proxy(new NextRequest("https://preview.example/onboarding"));
