@@ -4,6 +4,8 @@
 
 **Active extension:** Read [CODEX_FEATURES.md](CODEX_FEATURES.md) with this guide. Its §2 replaces the ticket order and adds features to the affected tickets.
 
+**Launch prerequisite:** review and apply `0004_request_permissions.sql` after C3 to close the client request-edit overdraft bypass before real request screens ship.
+
 **Deadline:** real students start using the app on **Wed 18 Nov, 12:00 KST**. Tickets 1–8 must be merged by then. Reliability beats features.
 
 ## What changed from AGENTS.md

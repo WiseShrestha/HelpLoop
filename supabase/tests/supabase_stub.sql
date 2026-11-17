@@ -11,8 +11,8 @@ create function cron.schedule(a text, b text, c text) returns bigint language sq
 create publication supabase_realtime;
 alter role service_role bypassrls;
 grant usage on schema public, auth to authenticated, anon, service_role;
-alter default privileges in schema public grant all on tables to authenticated;
-alter default privileges in schema public grant all on sequences to authenticated;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant execute on functions to authenticated;
 -- test helper
 create function expect_error(q text, label text) returns text language plpgsql as $$

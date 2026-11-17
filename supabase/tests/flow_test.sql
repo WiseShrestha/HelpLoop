@@ -248,3 +248,90 @@ reset role;
 set role service_role; reset request.jwt.claim.sub;
 select expect_true((select count(*)=1 from helper_course_stats where user_id='00000000-0000-0000-0000-00000000000b'), 'trusted server can read private record without a user JWT');
 reset role;
+
+-- C4: reproduce the 60+30 reservation scenario with realistic hosted grants.
+insert into auth.users values ('30000000-0000-0000-0000-000000000012');
+set role authenticated; set request.jwt.claim.sub='30000000-0000-0000-0000-000000000012';
+insert into profiles (id,display_name,entry_year) values (auth.uid(),'Permission test',2026);
+insert into requests (id,asker_id,course_code,topic,minutes,deadline,place) values
+ ('40000000-0000-0000-0000-000000000001',auth.uid(),'calc1','First',60,now()+interval '1 day','Library'),
+ ('40000000-0000-0000-0000-000000000002',auth.uid(),'calc1','Second',30,now()+interval '1 day','Library');
+select expect_error($$insert into requests (asker_id,course_code,topic,minutes,deadline,place) values
+ (auth.uid(),'calc1','Third',15,now()+interval '1 day','Library')$$,'third reservation still respects overdraft');
+select expect_true(not has_column_privilege('authenticated','requests','minutes','UPDATE')
+ and not has_column_privilege('authenticated','requests','created_at','UPDATE'), 'minutes and creation time have no client update privilege');
+select expect_error($$update requests set minutes=120 where asker_id=auth.uid()$$,'cannot inflate reserved minutes');
+select expect_error($$update requests set created_at='2000-01-01' where asker_id=auth.uid()$$,'cannot backdate existing requests');
+select expect_error($$update requests set deadline=now()+interval '2 days' where asker_id=auth.uid()$$,'cannot change deadline');
+select expect_error($$update requests set course_code='phys1',topic_tag=null,is_anonymous=true where asker_id=auth.uid()$$,'cannot rewrite request identity or classification');
+select expect_true((select sum(minutes)=90 and my_balance()-sum(minutes)=-30 from requests where asker_id=auth.uid()), 'failed edits leave the original reservation intact');
+update requests set status='cancelled' where id='40000000-0000-0000-0000-000000000001';
+select expect_true((select status='cancelled' from requests where id='40000000-0000-0000-0000-000000000001'), 'owner can still cancel an open request');
+insert into requests (asker_id,course_code,topic,minutes,deadline,place) values (auth.uid(),'calc1','After cancel',15,now()+interval '1 day','Library');
+select expect_true(not has_column_privilege('authenticated','requests','created_at','INSERT'), 'creation time is server-managed on insert');
+select expect_error($$insert into requests (asker_id,course_code,topic,minutes,deadline,place,created_at) values
+ (auth.uid(),'calc1','Backdated insert',15,now()+interval '1 day','Library','2000-01-01')$$,'cannot backdate a new request');
+set request.jwt.claim.sub='00000000-0000-0000-0000-00000000000e';
+with changed as (update requests set status='cancelled' where id='40000000-0000-0000-0000-000000000002' returning id)
+ select expect_true(count(*)=0, 'outsider cannot cancel a request') from changed;
+
+-- Public labels are safe reference data; overall helper identities require sign-in.
+set role anon; reset request.jwt.claim.sub;
+select expect_true(exists(select 1 from stuck_map m join courses c on c.code=m.course_code
+ join course_topics t on (t.course_code,t.tag)=(m.course_code,m.topic_tag)
+ where m.topic_tag='limits' and c.name_en='Calculus I' and t.label_en='Limits and continuity'), 'signed-out Stuck Map has readable course and topic labels');
+select expect_true(not has_table_privilege('anon','helper_stats','SELECT') and not has_any_column_privilege('anon','helper_stats','SELECT'), 'hosted defaults do not expose helper directory');
+select expect_error($$select * from helper_stats$$, 'signed-out helper directory is refused');
+set role authenticated; set request.jwt.claim.sub='00000000-0000-0000-0000-00000000000b';
+select expect_true(exists(select 1 from helper_stats where user_id=auth.uid()), 'signed-in helper statistics remain readable');
+
+-- A cancelled helper loses raw anonymous-request access; the open board stays masked.
+set request.jwt.claim.sub='00000000-0000-0000-0000-00000000000d';
+select cancel_session(:'anonymous_session');
+select expect_true((select count(*)=0 from requests where id='10000000-0000-0000-0000-000000000001'), 'cancelled helper loses raw request access');
+select expect_true((select asker_id is null from request_board where id='10000000-0000-0000-0000-000000000001'), 'reopened anonymous request remains masked to former helper');
+
+-- The host is reserved once, even with an explicit join. Future tables use delete.
+set request.jwt.claim.sub='30000000-0000-0000-0000-000000000012';
+insert into open_tables (id,host_id,place,starts_at,ends_at,max_people) values
+ ('50000000-0000-0000-0000-000000000001',auth.uid(),'Library',now(),now()+interval '1 hour',2),
+ ('50000000-0000-0000-0000-000000000002',auth.uid(),'Library',now()+interval '1 hour',now()+interval '2 hours',2);
+insert into open_table_joins (table_id,user_id) values ('50000000-0000-0000-0000-000000000001',auth.uid());
+select expect_error($$update open_tables set ends_at=now() where id='50000000-0000-0000-0000-000000000002'$$,'future table cannot end before its start');
+delete from open_tables where id='50000000-0000-0000-0000-000000000002';
+select expect_true((select count(*)=0 from open_tables where id='50000000-0000-0000-0000-000000000002'), 'host can delete a future table');
+set request.jwt.claim.sub='00000000-0000-0000-0000-00000000000d';
+insert into open_table_joins (table_id,user_id) values ('50000000-0000-0000-0000-000000000001',auth.uid());
+select expect_true((select count(*)=2 from open_table_joins where table_id='50000000-0000-0000-0000-000000000001'), 'explicit host join is not counted twice');
+set request.jwt.claim.sub='00000000-0000-0000-0000-00000000000e';
+select expect_error($$insert into open_table_joins (table_id,user_id) values ('50000000-0000-0000-0000-000000000001',auth.uid())$$,'third person cannot join a two-person table with explicit host');
+
+-- Referenced topic keys are stable; labels remain editable by admins.
+set request.jwt.claim.sub='00000000-0000-0000-0000-000000000011';
+select expect_error($$delete from course_topics where course_code='calc1' and tag='limits'$$, 'cannot delete a referenced tag');
+select expect_error($$update course_topics set tag='new-limits' where course_code='calc1' and tag='limits'$$, 'cannot rename a referenced tag');
+update course_topics set label_en='Limits, clarified' where course_code='calc1' and tag='limits';
+select expect_true((select label_en='Limits, clarified' from course_topics where course_code='calc1' and tag='limits'), 'admin can still improve a referenced label');
+reset role;
+
+-- Award shape checks run for real service-role writes, not only the SQL owner.
+set role service_role; reset request.jwt.claim.sub;
+insert into loop_bonuses select 'valid-shape',user_id,week_start,tickets,members,session_ids,created_at
+ from loop_bonuses where loop_key='abc' limit 1;
+select expect_error($$insert into loop_bonuses select 'duplicate-members',user_id,week_start,tickets,
+ array[user_id,user_id,members[3]],session_ids,created_at from loop_bonuses where loop_key='abc' limit 1$$, 'loop members must be distinct');
+select expect_error($$insert into loop_bonuses select 'duplicate-sessions',user_id,week_start,tickets,
+ members,array[session_ids[1],session_ids[1],session_ids[3]],created_at from loop_bonuses where loop_key='abc' limit 1$$, 'loop sessions must be distinct');
+select expect_error($$insert into loop_bonuses select 'non-monday',user_id,week_start+1,tickets,members,session_ids,created_at
+ from loop_bonuses where loop_key='abc' limit 1$$, 'loop week must start Monday');
+select expect_error($$update ticket_awards set week_start=week_start+1$$, 'base award week must start Monday');
+reset role;
+
+-- Pilot reference seed is repeatable and preserves admin-edited labels.
+\ir ../seed.sql
+\ir ../pilot_topics.sql
+select expect_true((select count(*)=36 from course_topics where course_code in ('calc1','phys1','chem1','bio1','eng1','prog1') and tag not in ('taylor','repeat','boundary')), '36 starter topic tags cover the six pilot courses');
+select count(*) as seeded_topic_count from course_topics \gset
+\ir ../pilot_topics.sql
+select expect_true((select count(*)=:seeded_topic_count from course_topics), 'repeating topic seed adds no duplicates');
+select expect_true((select label_en='Limits, clarified' from course_topics where course_code='calc1' and tag='limits'), 'topic seed preserves edited labels');
