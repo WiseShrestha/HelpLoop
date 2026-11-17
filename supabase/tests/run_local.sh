@@ -9,8 +9,9 @@ psql -q -v ON_ERROR_STOP=1 -d $DB -f supabase_stub.sql
 for migration in ../migrations/*.sql; do
   sed 's/^create extension if not exists pg_cron;/-- pg_cron stubbed/' "$migration" | psql -q -v ON_ERROR_STOP=1 -d $DB >/dev/null
 done
-out=$(psql -q -v ON_ERROR_STOP=1 -d $DB -f flow_test.sql 2>&1)
+out=$(psql -q -v ON_ERROR_STOP=1 -d $DB -f flow_test.sql 2>&1) || { echo "$out"; exit 1; }
 echo "$out"
 if echo "$out" | grep -q "FAIL"; then echo "DB TESTS FAILED"; exit 1; fi
 bash capacity_concurrency.sh
+bash reservation_concurrency.sh
 echo "DB TESTS PASSED"

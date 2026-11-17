@@ -20,9 +20,11 @@ reset role;
 -- B and C sign up
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
 insert into profiles (id, display_name, entry_year, department, help_courses, consent) values (auth.uid(), 'Helper', 2023, 'EE', '{calc1}', true);
+insert into private_profiles values (auth.uid(), 'Student 2', '20261002', 'student2@kaist.ac.kr');
 reset role;
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
 insert into profiles (id, display_name, entry_year, help_courses, consent) values (auth.uid(), 'Outsider', 2026, '{calc1}', true);
+insert into private_profiles values (auth.uid(), 'Student 3', '20261003', 'student3@kaist.ac.kr');
 select 'C sees open requests = ' || count(*) from request_board where status = 'open';
 select 'C sees private profiles of others = ' || count(*) from private_profiles;
 reset role;
@@ -113,6 +115,8 @@ insert into profiles (id, display_name, entry_year, is_admin) values
  ('00000000-0000-0000-0000-00000000000d','D',2026,false),('00000000-0000-0000-0000-00000000000e','E',2026,false),
  ('00000000-0000-0000-0000-00000000000f','F',2026,false),('00000000-0000-0000-0000-000000000010','G',2026,false),
  ('00000000-0000-0000-0000-000000000011','Admin',2026,true);
+update profiles set consent = true where display_name = 'D';
+insert into private_profiles values ('00000000-0000-0000-0000-00000000000d','Student D','20261004','d@kaist.ac.kr');
 select expect_true((select count(*) = 2 from courses where kind = 'language'), 'F6 language seeds');
 select expect_true((select count(*) = 6 from courses where kind = 'skill'), 'F6 skill seeds');
 select expect_true((select kind = 'course' from courses where code = 'calc1'), 'existing courses keep their kind');
@@ -170,20 +174,20 @@ reset role;
 
 -- F2: public, bounded history, KST weeks and distinct-student suppression.
 set timezone = 'UTC';
-insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place)
- select id,'calc1','Limits','limits',15,now()+interval '1 day','Library' from profiles order by id limit 2;
+insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,status)
+ select id,'calc1','Limits','limits',15,now()+interval '1 day','Library','expired' from profiles order by id limit 2;
 set role anon; reset request.jwt.claim.sub;
 select expect_true((select count(*) = 0 from stuck_map where topic_tag='limits'), 'two-request group is suppressed');
 reset role;
-insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place)
- values ('00000000-0000-0000-0000-00000000000c','calc1','Limits','limits',15,now()+interval '1 day','Library');
-insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place)
- select '00000000-0000-0000-0000-00000000000a','calc1','Repeat','repeat',15,now()+interval '1 day','Library' from generate_series(1,3);
-insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,created_at)
- select id,'calc1','Boundary','boundary',15,now()+interval '1 day','Library',
+insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,status)
+ values ('00000000-0000-0000-0000-00000000000c','calc1','Limits','limits',15,now()+interval '1 day','Library','expired');
+insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,status)
+ select '00000000-0000-0000-0000-00000000000a','calc1','Repeat','repeat',15,now()+interval '1 day','Library','expired' from generate_series(1,3);
+insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,status,created_at)
+ select id,'calc1','Boundary','boundary',15,now()+interval '1 day','Library','expired',
    (:'current_week'::timestamp - interval '7 weeks') at time zone 'Asia/Seoul' from profiles order by id limit 3;
-insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,created_at)
- select id,'calc1','Too old','boundary',15,now()+interval '1 day','Library',
+insert into requests (asker_id,course_code,topic,topic_tag,minutes,deadline,place,status,created_at)
+ select id,'calc1','Too old','boundary',15,now()+interval '1 day','Library','expired',
    (:'current_week'::timestamp - interval '8 weeks') at time zone 'Asia/Seoul' from profiles order by id limit 3;
 set role anon;
 select expect_true((select requests = 3 from stuck_map where topic_tag='limits'), 'three distinct students make group visible');
@@ -252,7 +256,12 @@ reset role;
 -- C4: reproduce the 60+30 reservation scenario with realistic hosted grants.
 insert into auth.users values ('30000000-0000-0000-0000-000000000012');
 set role authenticated; set request.jwt.claim.sub='30000000-0000-0000-0000-000000000012';
-insert into profiles (id,display_name,entry_year) values (auth.uid(),'Permission test',2026);
+insert into profiles (id,display_name,entry_year,consent) values (auth.uid(),'Permission test',2026,true);
+insert into private_profiles values (auth.uid(),'Permission fixture','20261012','permissions@kaist.ac.kr');
+select expect_error($$insert into requests (asker_id,course_code,topic,minutes,deadline,place) values
+ (auth.uid(),'calc1','Bulk first',60,now()+interval '1 day','Library'),
+ (auth.uid(),'calc1','Bulk second',60,now()+interval '1 day','Library')$$, 'overdraft rejects the entire over-budget batch');
+select expect_true(my_open_request_minutes()=0, 'refused batch reserved no credits');
 insert into requests (id,asker_id,course_code,topic,minutes,deadline,place) values
  ('40000000-0000-0000-0000-000000000001',auth.uid(),'calc1','First',60,now()+interval '1 day','Library'),
  ('40000000-0000-0000-0000-000000000002',auth.uid(),'calc1','Second',30,now()+interval '1 day','Library');
@@ -335,3 +344,37 @@ select count(*) as seeded_topic_count from course_topics \gset
 \ir ../pilot_topics.sql
 select expect_true((select count(*)=:seeded_topic_count from course_topics), 'repeating topic seed adds no duplicates');
 select expect_true((select label_en='Limits, clarified' from course_topics where course_code='calc1' and tag='limits'), 'topic seed preserves edited labels');
+
+-- C5: exercise the database entry points without going through page navigation.
+reset role;
+insert into auth.users values ('50000000-0000-0000-0000-000000000001');
+insert into profiles (id,display_name,entry_year,consent)
+ values ('50000000-0000-0000-0000-000000000001','Incomplete signup',2026,true);
+insert into requests (id,asker_id,course_code,topic,minutes,deadline,place)
+ values ('50000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000001',
+ 'calc1','Existing request from incomplete account',15,now()+interval '1 day','Library');
+
+set role authenticated; set request.jwt.claim.sub='50000000-0000-0000-0000-000000000001';
+select expect_error($$insert into requests (asker_id,course_code,topic,minutes,deadline,place)
+ values (auth.uid(),'calc1','Incomplete signup',15,now()+interval '1 day','Library')$$,
+ 'consent without private profile cannot post');
+select expect_error($$select accept_request('40000000-0000-0000-0000-000000000002',now(),'Library')$$,
+ 'consent without private profile cannot accept');
+reset role;
+
+insert into private_profiles values ('50000000-0000-0000-0000-000000000001','Private fixture','20261013','fixture@kaist.ac.kr');
+update profiles set consent=false where id='50000000-0000-0000-0000-000000000001';
+set role authenticated;
+select expect_error($$insert into requests (asker_id,course_code,topic,minutes,deadline,place)
+ values (auth.uid(),'calc1','Missing consent',15,now()+interval '1 day','Library')$$,
+ 'private profile without consent cannot post');
+select expect_error($$select accept_request('40000000-0000-0000-0000-000000000002',now(),'Library')$$,
+ 'private profile without consent cannot accept');
+
+set request.jwt.claim.sub='00000000-0000-0000-0000-00000000000b';
+select expect_error($$select accept_request('50000000-0000-0000-0000-000000000002',now(),'Library')$$,
+ 'completed helper cannot match an existing request from an incomplete asker');
+reset role;
+select expect_true(not exists (
+ select 1 from sessions where request_id in ('40000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000002')
+), 'refused matches create no sessions');
