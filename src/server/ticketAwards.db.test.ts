@@ -132,6 +132,27 @@ describe.skipIf(!process.env.PGHOST)("ticket awards on Postgres", () => {
     expect((await awards()).some((r) => r.session_id === SCHEDULED)).toBe(false);
   });
 
+  it("preserves awards written after the recompute history read", async () => {
+    const concurrent = sid(8);
+    const racingStore: RewardsStore = {
+      ...store,
+      async completedBefore(end) {
+        const snapshot = await store.completedBefore(end);
+        await owner.query("update sessions set status='completed', rating=5, completed_at=$1 where id=$2",
+          ["2026-11-21T03:00:00Z", concurrent]);
+        await awardSession(store, A, concurrent);
+        return snapshot;
+      },
+    };
+    try {
+      await recomputeWeek(racingStore, ADMIN, new Date("2026-11-18T00:00:00Z"));
+      expect((await awards()).some(row => row.session_id === concurrent)).toBe(true);
+    } finally {
+      await owner.query("delete from ticket_awards where session_id=$1", [concurrent]);
+      await owner.query("update sessions set status='scheduled', rating=null, completed_at=null where id=$1", [concurrent]);
+    }
+  });
+
   it("recomputes a week for admins only, restoring lost awards and dropping disputed ones", async () => {
     await expect(recomputeWeek(store, A, new Date("2026-11-18T00:00:00Z"))).rejects.toThrow("Admins only");
     await owner.query("delete from ticket_awards where session_id = $1", [sid(3)]); // a missed call
