@@ -40,11 +40,42 @@ select expect_error($$select confirm_session((select id from sessions limit 1), 
 reset role;
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 select expect_error($$select accept_request((select id from requests where topic='Integrals'), now(), 'x')$$, 'asker cannot take own request');
-select 'A confirms first (rating 5): status = ' || confirm_session((select id from sessions limit 1), 5, null);
+select expect_error($$select confirm_session((select id from sessions limit 1), 5, null)$$,
+  'asker cannot confirm before the scheduled session');
+reset role;
+
+-- Simulate a start that has passed but a session that has not ended.
+update sessions set scheduled_at=now()-interval '10 minutes', created_at=now()-interval '2 hours'
+ where status='scheduled';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+select expect_error($$select confirm_session((select id from sessions limit 1), null, 'Early notes')$$,
+  'helper must wait for the full session duration');
+reset role;
+
+-- A backdated scheduled time cannot override a recent acceptance.
+update sessions set scheduled_at=now()-interval '2 hours', created_at=now() where status='scheduled';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select expect_error($$select confirm_session((select id from sessions limit 1), 5, null)$$,
+  'backdated start cannot bypass the acceptance timestamp');
+reset role;
+select expect_true((select helper_confirmed_at is null and asker_confirmed_at is null
+  and covered is null and rating is null from sessions where status='scheduled'),
+  'early attempts leave both confirmations untouched');
+select expect_true(not exists (select 1 from ledger where reason in ('session_earned','session_spent'))
+  and not exists (select 1 from events where type in ('session_confirmed','session_completed')),
+  'early attempts leave credits and confirmation events untouched');
+
+-- Move both clocks back for a completed meeting. Late confirmation is allowed.
+update sessions set scheduled_at=now()-interval '3 days', created_at=now()-interval '3 days'
+ where status='scheduled';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select expect_true(confirm_session((select id from sessions limit 1), 5, null) = 'scheduled',
+  'asker can confirm after the session ends, even after 48 hours');
 reset role;
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
 select expect_error($$select confirm_session((select id from sessions limit 1), null, '')$$, 'helper must say what was covered');
-select 'B confirms: status = ' || confirm_session((select id from sessions limit 1), null, 'Taylor expansion of e^x and error bound');
+select expect_true(confirm_session((select id from sessions limit 1), null,
+  'Taylor expansion of e^x and error bound') = 'completed', 'second confirmation completes the session');
 select 'B balance = ' || my_balance();
 select expect_error($$select confirm_session((select id from sessions limit 1), null, 'again')$$, 'cannot confirm a completed session twice');
 reset role;
