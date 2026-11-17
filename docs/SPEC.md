@@ -52,13 +52,14 @@ Test values (in `tickets.test.ts`): new pair 30 min rating 5 → 1.5; same pair 
 
 ### 5.1b Close the Loop (F1; implementation follows C3)
 
-A completed session is an edge helper → asker when the asker's rating is 4 or 5. A qualifying loop has 3–5 distinct students and qualifying edges completed within 14 days. Each set of students is rewarded once ever, identified by a stable `loop_key`; each member earns 1 ticket. The server records awards in `loop_bonuses`, keyed by `(loop_key, user_id)` for idempotence. A student receives at most 2 loop bonuses per KST week.
+A completed session is an edge helper → asker when the asker's rating is 4 or 5. A qualifying loop has 3–5 distinct students and qualifying edges completed within 14 days. Award rows require distinct members/session IDs and Monday week dates (base awards also require Mondays). Each set of students is rewarded once ever, identified by a stable `loop_key`; each member earns 1 ticket. The server records awards in `loop_bonuses`, keyed by `(loop_key, user_id)` for idempotence. A student receives at most 2 loop bonuses per KST week.
 
 Base ticket rules and model code in §5.1 stay unchanged. The draw's `week_tickets` pool combines `least(base awards, 10) + least(loop awards, 2)` per user and week, including students with only loop awards. The combined maximum is 12. Open Tables earn no credits or tickets. C3 adds storage and the pool view; F1 adds award detection and notifications. The supplied feature guide refers to `loops.ts` and its seven tests, but those source files must be supplied before F1 implementation.
 
 ### 5.2 Credits (`ledger.ts` and the database)
 - Time bank: a completed session moves `minutes` from asker to helper. Sessions never change total credit.
 - Starter grant 60 on sign-up (database trigger). Perks remove credit.
+- Clients can update only `requests.status`; the owner-only open/cancelled RLS rule still applies. All other request fields are immutable after posting. `created_at` is server-owned even on insertion; cancelling and reposting runs the original overdraft checks again. Service-role server operations retain their privileges.
 - Posting is allowed while `balance − minutes in my open/matched requests − new minutes ≥ −30`. Enforced by RLS on `requests`.
 - Invariant (tested): total credit = 60 × users + admin grants − perks spent.
 
@@ -104,14 +105,14 @@ Tables: `profiles`, `private_profiles`, `courses`, `requests`, `sessions`, `ledg
 C3 additions and access rules:
 
 - `courses.kind`: `course` (default), `language`, or `skill`. Seed Korean/English conversation and Python, LaTeX, CAD, research-lab preparation, CVs/applications and major advice. `help_courses` continues to hold the selected codes. Teaching-language preferences such as Hindi/Kazakh are separate future matching data; a conversation offering is a subject, not a claim that a student teaches every subject in that language.
-- `course_topics`: bilingual tags per course; signed-in students read, admins manage. `requests.topic_tag` is nullable for Other; a composite foreign key keeps a tag with its course. Actual pilot topic tags must be added before launch.
+- `course_topics`: bilingual tags per course; signed-in students and signed-out Stuck Map visitors read the reference labels; admins manage. `requests.topic_tag` is nullable for Other; a composite foreign key keeps a tag with its course. Actual pilot topic tags must be added before launch.
 - `requests.is_anonymous`: false by default. Direct rows are limited to the asker, admins and the helper of a non-cancelled session. `request_board` is a read-only owner-executed security-barrier view for authenticated viewers: open requests plus their own requests, masking `asker_id` for anonymous asks unless the viewer is the asker. Accepted helpers see identity through participant-only sessions/raw requests. Hiding a profile cannot anonymize identifying text a student writes themselves.
 - Remove raw requests from Realtime publication. B3 polls the masked board every 15 seconds while visible; participant session updates stay on Realtime. Ranking may use identities inside the server, but the browser payload must redact an anonymous asker's ID, name, year and department and return a boolean for the new-connection check. The current internal `ScoredRequest` shape must not be serialized unchanged for anonymous requests in B3/A2.
 - `loop_bonuses`: service-role writes only; each member and admins can read that loop's awards. Rows store members and qualifying session IDs; ticket amount is 1. `week_tickets` exposes the capped combined pool to authenticated viewers.
 - `stuck_map`: public aggregate of tagged, non-cancelled requests in the current KST week and seven prior weeks. Columns are course, tag, Monday KST date and request count. Require at least 3 requests from at least 3 distinct askers; repeated requests from one student do not meet the threshold. This reduces small-group disclosure; UI copy must not promise that re-identification is impossible.
 - `open_tables` / `open_table_joins`: signed-in students read; users create their own tables and joins and remove their own joins. Hosts may delete a table or update its end time. Meetings last at most six hours; capacity is 2–12 including the host, who reserves one place even without an explicit join row. A private, non-RPC trigger serializes capacity checks and rejects ended/full tables. Open Table rows/joins are published for signed-in Realtime consumers; they do not affect rewards.
 - `perks.department`: optional department grouping for Major Explorer.
-- `profiles.public_record`: false by default. The read-only `helper_course_stats` security-barrier view shows completed-session counts, distinct people, minutes, average rating and first/last completion by course. Owners/admins and the trusted service role read private rows; other viewers, including signed-out visitors, see opted-in rows only. Turning the flag off immediately removes those rows from public queries; the future F7 page must use uncached responses to respect opt-out. Existing signed-in profile/overall helper-stat visibility is unchanged.
+- `profiles.public_record`: false by default. The read-only `helper_course_stats` security-barrier view shows completed-session counts, distinct people, minutes, average rating and first/last completion by course. The overall `helper_stats` directory is signed-in-only, including under hosted default grants. Owners/admins and the trusted service role read private rows; other viewers, including signed-out visitors, see opted-in rows only. Turning the flag off immediately removes those rows from public queries; the future F7 page must use uncached responses to respect opt-out. Existing signed-in profile/overall helper-stat visibility is unchanged.
 
 Writes that touch credit go only through database functions called with `supabase.rpc`:
 - `accept_request(request, scheduled_at, place)` → session id (atomic; one helper wins)
@@ -162,3 +163,11 @@ Lane B calls `completeSessionRewards` right after `confirm_session` returns `'co
 
 ## 11. Not in the pilot
 In-app chat (use KakaoTalk), push notifications, cash payments, verified KAIST email, native apps, library room booking.
+
+## C4 deployment and review follow-ups
+
+- `0004_request_permissions.sql` must be reviewed and applied before launch; immutable earlier migrations retain their original contents.
+- Signed-out visitors can read `courses` and `course_topics` reference labels directly; this does not grant access to student profiles or request rows.
+- `supabase/pilot_topics.sql` supplies six editable starter tags for each of the six pilot course slugs. It is not an official syllabus and preserves existing labels on repeat runs.
+- F4 deletes a not-yet-started table when the host cancels it; setting its end before its start is invalid. Debounce refreshes from table and join Realtime events: the capacity lock also produces a parent update.
+- F2 edits labels for referenced tags. Referenced tag keys cannot be deleted/renamed; the editor must show the foreign-key error clearly.

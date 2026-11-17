@@ -17,6 +17,7 @@
 Before launch (Wed 18 Nov, 12:00 KST):
 1. **T1** database wiring (unchanged)
 2. **C3** migration 0003 for all seven features (contract change, human approves)
+   - Apply the reviewed C4 `0004_request_permissions.sql` correction before launch: clients may only update request status; creation times are server-managed. Public course/topic labels and signed-in-only helper statistics are explicit.
 3. **B1** onboarding, now with course, language and skill chips (F6)
 4. **A1** tickets on completion (unchanged)
 5. **B2** ask form, now with the anonymous toggle (F3), topic tag (F2) and skills and languages (F6)
