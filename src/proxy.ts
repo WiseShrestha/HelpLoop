@@ -23,15 +23,18 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Cache-Control", "private, no-store");
   if (!user || request.nextUrl.pathname === "/onboarding") return response;
 
-  const { data: profile, error } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
-  if (error) {
+  const [profile, identity] = await Promise.all([
+    supabase.from("profiles").select("id, consent").eq("id", user.id).maybeSingle(),
+    supabase.from("private_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
+  ]);
+  if (profile.error || identity.error) {
     const unavailable = new NextResponse("잠시 후 다시 시도해 주세요. / Please try again shortly.", {
       status: 503, headers: { "Cache-Control": "private, no-store" },
     });
     response.cookies.getAll().forEach((cookie) => unavailable.cookies.set(cookie));
     return unavailable;
   }
-  if (!profile) {
+  if (!profile.data?.consent || !identity.data) {
     const url = request.nextUrl.clone();
     url.pathname = "/onboarding";
     url.search = "";
