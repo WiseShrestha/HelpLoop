@@ -3,16 +3,15 @@
 import { weekStartKST } from "../model/tickets.ts";
 import { pilotMetrics, type Metric, type MetricInput } from "./metrics.ts";
 
-export type ReportInput = MetricInput & {
-  sessions: (MetricInput["sessions"][number] & { completed_at: string | null })[];
-};
+export type ReportSession = MetricInput["sessions"][number] & { completed_at: string | null };
+export type ReportInput = Omit<MetricInput, "sessions"> & { sessions: ReportSession[] };
 export type WeekRow = { week: string; sessions: number; newPairs: number; helpers: number; askers: number };
 
 const kstDay = (d: Date) => new Date(d.getTime() + 9 * 3_600_000).toISOString().slice(0, 10);
 const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
 /** Completed sessions per KST week, and pairs who met for the first time that week. */
-export function weeklyRows(sessions: ReportInput["sessions"]): WeekRow[] {
+export function weeklyRows(sessions: ReportSession[]): WeekRow[] {
   const done = sessions.filter((s) => s.status === "completed" && s.completed_at)
     .sort((a, b) => Date.parse(a.completed_at!) - Date.parse(b.completed_at!));
   const seen = new Set<string>();
