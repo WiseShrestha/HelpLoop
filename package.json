@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "next build"
+    "build": "next build",
+    "analyze": "node --env-file-if-exists=.env.local scripts/analyze.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
