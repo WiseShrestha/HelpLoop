@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Database, Json } from "@/lib/db/types";
+import { loopAwards, loopsClosedBy, LOOP_RULES, type Edge } from "@/lib/model/loops";
 import { sessionTickets, weekStartKST, type CompletedSession, type TicketBreakdown } from "@/lib/model/tickets";
 
 // Not a "use server" module: nothing here is reachable from the browser. src/server/rewards.ts
@@ -11,6 +12,7 @@ export type SessionRow = Pick<
   "id" | "helper_id" | "asker_id" | "minutes" | "rating" | "status" | "completed_at"
 >;
 export type AwardRow = Database["public"]["Tables"]["ticket_awards"]["Insert"];
+export type LoopBonusRow = Database["public"]["Tables"]["loop_bonuses"]["Insert"];
 
 /** Data access with service-role rights. Production: rewardsStore.ts; tests: an in-memory or pg store. */
 export interface RewardsStore {
@@ -23,6 +25,16 @@ export interface RewardsStore {
   upsertAwards(rows: AwardRow[]): Promise<void>;
   weekAwardIds(weekStart: string): Promise<string[]>;
   deleteAwards(sessionIds: string[]): Promise<void>;
+  /** Completed sessions that finished in [from, to]. */
+  completedWithin(from: Date, to: Date): Promise<SessionRow[]>;
+  /** Which of `keys` already have loop_bonuses rows (a set of people is rewarded once, ever). */
+  rewardedLoopKeys(keys: string[]): Promise<string[]>;
+  /** Loop bonuses each of `userIds` already has in the week. */
+  loopBonusCounts(weekStart: string, userIds: string[]): Promise<Map<string, number>>;
+  /** Inserts loop bonuses, ignoring rows that already exist. */
+  insertLoopBonuses(rows: LoopBonusRow[]): Promise<void>;
+  weekLoopBonuses(weekStart: string): Promise<{ loop_key: string; session_ids: string[] }[]>;
+  deleteLoops(keys: string[]): Promise<void>;
 }
 
 export class RewardsError extends Error {}
@@ -56,6 +68,24 @@ function toAward(b: TicketBreakdown, s: CompletedSession): AwardRow {
   };
 }
 
+const edge = (s: CompletedSession): Edge =>
+  ({ sessionId: s.id, helperId: s.helperId, askerId: s.askerId, rating: s.rating, completedAt: s.completedAt });
+
+/** Close the Loop (SPEC §5.1b): bonus tickets for loops `closing` completes. Idempotent. */
+async function awardLoops(store: RewardsStore, closing: CompletedSession, history: CompletedSession[]): Promise<LoopBonusRow[]> {
+  const loops = loopsClosedBy(edge(closing), history.map(edge));
+  if (!loops.length) return [];
+  const week = kstDate(weekStartKST(closing.completedAt));
+  const rewarded = new Set(await store.rewardedLoopKeys(loops.map((l) => l.key)));
+  const counts = await store.loopBonusCounts(week, [...new Set(loops.flatMap((l) => l.members))]);
+  const rows = loopAwards(loops, rewarded, counts).map((a) => {
+    const loop = loops.find((l) => l.key === a.key)!;
+    return { loop_key: a.key, user_id: a.userId, week_start: week, tickets: a.tickets, members: loop.members, session_ids: loop.sessionIds };
+  });
+  if (rows.length) await store.insertLoopBonuses(rows);
+  return rows;
+}
+
 /** Tickets for one completed session. Only its helper or asker may ask. Idempotent. */
 export async function awardSession(store: RewardsStore, callerId: string, sessionId: string): Promise<{ tickets: number }> {
   const row = await store.session(sessionId);
@@ -69,6 +99,8 @@ export async function awardSession(store: RewardsStore, callerId: string, sessio
   if (!session || !breakdown) throw new RewardsError("This session is missing from its pair history");
 
   await store.upsertAwards([toAward(breakdown, session)]);
+  const window = await store.completedWithin(new Date(session.completedAt.getTime() - LOOP_RULES.windowDays * DAY_MS), session.completedAt);
+  await awardLoops(store, session, window.map(toCompleted));
   return { tickets: breakdown.tickets };
 }
 
@@ -91,5 +123,14 @@ export async function recomputeWeek(store: RewardsStore, callerId: string, weekS
   const keep = new Set(rows.map((r) => r.session_id));
   const stale = existingAwardIds.filter((id) => !keep.has(id));
   if (stale.length) await store.deleteAwards(stale);
+
+  // Loop bonuses: drop any built on a session that is no longer completed, then award loops a
+  // failed call missed, in completion order. Bonuses never move between weeks.
+  const completedIds = new Set(history.map((s) => s.id));
+  const brokenLoops = (await store.weekLoopBonuses(kstDate(start)))
+    .filter((l) => l.session_ids.some((id) => !completedIds.has(id))).map((l) => l.loop_key);
+  if (brokenLoops.length) await store.deleteLoops([...new Set(brokenLoops)]);
+  const inWeek = rows.map((r) => byId.get(r.session_id)!).sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
+  for (const closing of inWeek) await awardLoops(store, closing, history);
   return rows.length;
 }

@@ -15,17 +15,18 @@ const copy = {
     balance: "Your help credits", confirmed: "Confirmed", waiting: "Awaiting confirmation", covered: "What did you cover?", rating: "Session rating (1–5)", confirm: "Confirm session",
     cancel: "Cancel session", report: "Report a problem", reason: "What happened?", send: "Send report", retry: "Update tickets", available: "Confirmations open",
     saved: "Saved.", early: "You can confirm after the session ends.", invalid: "Please check your entry.", closed: "This action is no longer available.", error: "Couldn’t save. Please try again.",
-    reported: "Your report was sent for review.", tickets: "The session is complete. Retry the ticket update.", earned: "Session tickets" },
+    reported: "Your report was sent for review.", tickets: "The session is complete. Retry the ticket update.", earned: "Session tickets", loop: (names: string) => `You closed a loop with ${names}! +1 ticket` },
   ko: { title: "공부 세션", scheduled: "예약됨", completed: "완료", cancelled: "취소됨", disputed: "검토 중", helper: "도우미", asker: "요청자",
     balance: "내 도움 크레딧", confirmed: "확인 완료", waiting: "확인 대기", covered: "무엇을 공부했나요?", rating: "세션 평점 (1–5)", confirm: "세션 확인",
     cancel: "세션 취소", report: "문제 신고", reason: "어떤 일이 있었나요?", send: "신고 보내기", retry: "티켓 갱신", available: "확인 가능 시간",
     saved: "저장했어요.", early: "세션이 끝난 후 확인할 수 있어요.", invalid: "입력 내용을 확인해 주세요.", closed: "더 이상 사용할 수 없어요.", error: "저장하지 못했어요. 다시 시도해 주세요.",
-    reported: "신고가 접수됐어요.", tickets: "세션이 완료됐어요. 티켓 갱신을 다시 시도해 주세요.", earned: "세션 티켓" },
+    reported: "신고가 접수됐어요.", tickets: "세션이 완료됐어요. 티켓 갱신을 다시 시도해 주세요.", earned: "세션 티켓", loop: (names: string) => `${names}와(과) 도움의 고리를 완성했어요! 티켓 +1` },
 };
 
 type Session = { id: string; status: "scheduled" | "completed" | "cancelled" | "disputed"; helper: string; asker: string;
   isHelper: boolean; helperConfirmed: boolean; askerConfirmed: boolean; time: string; ends: number; place: string;
-  minutes: number; covered: string | null; rating: number | null; balance: number; tickets: number | null };
+  minutes: number; covered: string | null; rating: number | null; balance: number; tickets: number | null;
+  loops?: string[][] }; // other members of loops this session closed for me
 
 export function SessionScreen({ session: s }: { session: Session }) {
   const [language, setLanguage] = useLanguage();
@@ -57,6 +58,7 @@ export function SessionScreen({ session: s }: { session: Session }) {
         {s.covered && <p>{s.covered}</p>}{s.rating !== null && <p>{t.rating} · {s.rating}</p>}
         <p>{t.balance} · {s.balance}</p>{s.tickets !== null && <p>{t.earned} · {s.tickets}</p>}
       </article>
+      {s.loops?.map((names, i) => <p key={i} role="status" className="rounded-xl bg-[#c8efdc] p-4 font-bold">🔁 {t.loop(names.join(language === "ko" ? ", " : " and "))}</p>)}
       {s.status === "scheduled" && <>
         {!done && <form action={action}><fieldset className={ask.controls} disabled={pending}>
           <p>{t.available} · {date.format(s.ends)} KST</p>

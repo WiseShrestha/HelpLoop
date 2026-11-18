@@ -60,6 +60,23 @@ export function pgRewardsStore(db: pg.Client): RewardsStore {
     weekAwardIds: async (week) =>
       (await db.query("select session_id from ticket_awards where week_start = $1", [week])).rows.map((r) => r.session_id),
     deleteAwards: async (ids) => void (await db.query("delete from ticket_awards where session_id = any($1::uuid[])", [ids])),
+    completedWithin: (from, to) => rows(`select ${cols} from sessions where status = 'completed'
+      and completed_at >= $1 and completed_at <= $2`, [from, to]),
+    rewardedLoopKeys: async (keys) =>
+      (await db.query("select distinct loop_key from loop_bonuses where loop_key = any($1)", [keys])).rows.map((r) => r.loop_key),
+    loopBonusCounts: async (week, ids) => new Map((await db.query(
+      "select user_id, count(*)::int as n from loop_bonuses where week_start = $1 and user_id = any($2::uuid[]) group by user_id",
+      [week, ids])).rows.map((r) => [r.user_id, r.n])),
+    async insertLoopBonuses(loops) {
+      for (const l of loops) {
+        await db.query(`insert into loop_bonuses (loop_key, user_id, week_start, tickets, members, session_ids)
+          values ($1, $2, $3, $4, $5, $6) on conflict (loop_key, user_id) do nothing`,
+          [l.loop_key, l.user_id, l.week_start, l.tickets, l.members, l.session_ids]);
+      }
+    },
+    weekLoopBonuses: async (week) =>
+      (await db.query("select loop_key, session_ids from loop_bonuses where week_start = $1", [week])).rows,
+    deleteLoops: async (keys) => void (await db.query("delete from loop_bonuses where loop_key = any($1)", [keys])),
   };
 }
 

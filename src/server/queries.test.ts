@@ -31,16 +31,19 @@ describe("current student's queries", () => {
     vi.useFakeTimers().setSystemTime(new Date("2026-11-22T15:00:00Z"));
     const award = { sessionId: "session", helperId: "me", base: 1, newPair: true, pairFactor: 1, ratingFactor: 1, tickets: 1.5 };
     const calls = fixture({ my_balance: [90], ledger: [[{ delta: 30, reason: "session_earned", created_at: "today", session_id: "session" }]],
-      week_tickets: [{ tickets: 12 }], ticket_awards: [[{ breakdown: award }]], draws: [{ week_start: "2026-11-23", commit_hash: "hash", prizes: [{ label: "Coffee" }] }] });
+      week_tickets: [{ tickets: 12 }], ticket_awards: [[{ breakdown: award }]], draws: [{ week_start: "2026-11-23", commit_hash: "hash", prizes: [{ label: "Coffee" }] }],
+      loop_bonuses: [[{ loop_key: "a|b|me", members: ["me", "a", "b"], tickets: 1 }]], profiles: [[{ id: "a", display_name: "Ana" }, { id: "b", display_name: "Ben" }]] });
     const wallet = await getWallet();
     expect(wallet).toMatchObject({ balance: 90, weekTickets: 12, entries: [{ sessionId: "session" }], breakdown: [award], draw: { commitHash: "hash", prizes: [{ label: "Coffee" }] } });
+    expect(wallet.loops).toEqual([{ key: "a|b|me", tickets: 1, members: ["Ana", "Ben"] }]);
+    expect(calls).toContainEqual(["loop_bonuses","eq","user_id","me"]);
     for (const table of ["week_tickets", "ticket_awards", "draws"]) expect(calls).toContainEqual([table,"eq","week_start","2026-11-23"]);
     expect(calls).toContainEqual(["ledger","eq","user_id","me"]);
     expect(calls).toContainEqual(["ticket_awards","eq","helper_id","me"]);
   });
   it("handles an empty wallet week and refuses guests", async () => {
-    fixture({ my_balance: [60], ledger: [[]], ticket_awards: [[]] });
-    expect(await getWallet()).toEqual({ balance: 60, entries: [], weekTickets: 0, breakdown: [], draw: null });
+    fixture({ my_balance: [60], ledger: [[]], ticket_awards: [[]], loop_bonuses: [[]] });
+    expect(await getWallet()).toEqual({ balance: 60, entries: [], weekTickets: 0, breakdown: [], loops: [], draw: null });
     fixture({}, null);
     await expect(getWallet()).rejects.toThrow(/Sign in/);
     expect(await getHelpFeed()).toBeNull();
