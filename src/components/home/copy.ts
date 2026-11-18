@@ -1,5 +1,6 @@
 export const copy = {
   en: {
+    signedIn: "Signed in", exampleSession: "Example session",
     brand: "Study together", skip: "Skip to study requests", language: "Page language", account: "Your profile",
     hero: ["A little progress, together."], subtitle: "Your next study exchange.",
     credits: "Help credits", creditRule: ["Help a minute.", "Get a minute back."], demo: "Demo",
@@ -27,6 +28,7 @@ export const copy = {
     onboardingTitle: "Make yourself at home.", onboardingBody: "Profile setup is coming soon. Your study loop is on its way.",
   },
   ko: {
+    signedIn: "로그인됨", exampleSession: "예시 세션",
     brand: "공부품앗이", skip: "도움 요청 목록으로 건너뛰기", language: "페이지 언어", account: "내 프로필",
     hero: ["오늘도, 함께 한 걸음."], subtitle: "서로 도우며 함께 배워요.",
     credits: "도움 크레딧", creditRule: ["1분을 도우면,", "1분을 돌려받아요."], demo: "예시",

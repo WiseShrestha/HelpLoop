@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SignOut } from "@/components/sign-out";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { useLanguage } from "@/components/locale";
 import { copy } from "./copy";
@@ -25,8 +26,8 @@ import arrow from "./assets/icons/arrow.svg";
 
 type Panel = "request" | "session" | "ask" | "wallet" | "profile" | CampusPanel | null;
 
-export function HomeScreen({ configured, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
-  configured: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
+export function HomeScreen({ configured, signedIn = false, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
+  configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
 }) {
   const [language, setLanguage] = useLanguage();
   const t = copy[language];
@@ -49,7 +50,7 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
   useEffect(() => { document.title = language === "ko" ? "HelpLoop | 공부품앗이" : "HelpLoop | Study together"; }, [language]);
 
   function openRequest(index: number) { setRequest(index); setPanel("request"); }
-  const auth = (label = t.signIn as string, variant = styles.googleButton) => <GoogleSignIn configured={configured} language={language} label={label} className={variant} />;
+  const auth = (label = t.signIn as string, variant = styles.googleButton) => signedIn ? null : <GoogleSignIn configured={configured} language={language} label={label} className={variant} />;
   const icon = (src: string, size = 22) => <Image src={src} alt="" width={size} height={size} className={styles.icon} />;
   const c = campusCopy[language];
   const panelTitle = panel === "practice" ? c.practiceHeading : panel === "books" ? c.booksHeading : panel === "trust" ? c.trustHeading : panel === "session" ? t.sessionTopic : panel === "request" ? t.topics[request] : panel === "ask" ? t.askTitle : panel === "wallet" ? t.walletTitle : t.profileTitle;
@@ -91,6 +92,9 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
             <Image className={styles.heroArt} src={notebooks} alt="" width={300} height={200} priority sizes="(min-width: 900px) 280px, 170px" />
           </section>
           <section className={styles.workbench}>
+            {signedIn && <div className={styles.signedIn}>
+              <span>{t.signedIn}</span><Link href="/ask">{t.ask}{icon(arrow, 18)}</Link>
+            </div>}
             <div className={styles.tabs} role="tablist" aria-label={language === "en" ? "Study exchange" : "공부품앗이"}>
               {t.tabs.map((label, i) => <button type="button" key={i} ref={el => { tabs.current[i] = el; }}
                 role="tab" id={"tab-" + i} aria-controls="home-panel" aria-selected={tab === i} tabIndex={tab === i ? 0 : -1}
@@ -102,7 +106,7 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
             {authError && <p className={styles.error} role="alert">{t.authError}</p>}
             <div id="home-panel" role="tabpanel" aria-labelledby={"tab-" + tab} className={styles.tabPanel}>
               {tab === 2 ? <section className={styles.session} aria-labelledby="session-title">
-                <span className={styles.eyebrow}>{t.nextSession}</span>
+                <span className={styles.eyebrow}>{signedIn ? t.exampleSession : t.nextSession}</span>
                 <h2 id="session-title">{t.courses[0]}</h2><p className={styles.sessionTopic}>{t.sessionTopic}</p>
                 <div className={styles.partner}>
                   <div className={styles.pair} aria-hidden="true"><span>K</span>{icon(connection, 26)}<span>M</span></div>
@@ -141,7 +145,7 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
         </section>
         <CampusExplore language={language} onAsk={() => setPanel("ask")} onOpen={setPanel} />
         <aside className={styles.join}>
-          <div className={styles.googleEntry}><Image src={google} alt="" width={20} height={20} />{auth()}</div>
+          {!signedIn && <div className={styles.googleEntry}><Image src={google} alt="" width={20} height={20} />{auth()}</div>}
           <p className={styles.houseRule}>{t.houseRule}</p><p className={styles.safety}>{t.safety}</p>
         </aside>
       </div>}
@@ -153,12 +157,13 @@ export function HomeScreen({ configured, authError = false, onboarding = false, 
           <button type="button" className={styles.close} aria-label={t.close} onClick={() => dialog.current?.close()}>{icon(close)}</button>
           {(panel === "request" || panel === "session") && <span className={styles.course}>{t.courses[panel === "session" ? 0 : request]}</span>}
           <h2 id="dialog-heading">{panelTitle}</h2>
-          {panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : panel === "wallet" ? t.walletBody : t.profileBody}</p>}
+          {panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : panel === "wallet" ? t.walletBody : signedIn ? t.signedIn : t.profileBody}</p>}
           {panel === "ask" && <StudyPreferences language={language} />}
           {(panel === "request" || panel === "session") && <><p className={styles.dialogPlace}>{icon(clock)}{t.places[panel === "session" ? 0 : request]}</p>
             {panel === "session" && <p><time dateTime={exampleSessionAt}>{t.sessionTime} · {sampleDate}</time></p>}
             <p className={styles.sample}>{panel === "session" ? t.sessionNote : t.requestNote}</p></>}
           {panel !== "books" && <p className={styles.houseRule}>{t.houseRule}</p>}
+          {panel === "profile" && signedIn && <SignOut language={language} className={styles.primary} />}
           {panel === "ask" ? <Link className={styles.primary} href="/ask">{t.ask}</Link>
             : panel !== "books" && panel !== "trust" && auth(panel === "request" ? t.signInToHelp : t.signIn, styles.primary)}
         </div>

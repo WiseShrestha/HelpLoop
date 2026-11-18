@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useLanguage } from "@/components/locale";
+import { SignOut } from "@/components/sign-out";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { saveOnboarding } from "@/server/onboarding";
 import type { Offering } from "@/lib/onboarding";
@@ -87,6 +88,7 @@ export function OnboardingScreen({ configured, unavailable = false, offerings, i
           {state.error && <p role="alert">{state.error === "invalid" ? `${t.invalid} ${fieldLabel}` : t[state.error]}</p>}
         </div>
         <button className={`${home.primary} ${styles.submit}`} type="submit" disabled={pending}>{pending ? t.saving : t.submit}<span aria-hidden="true">→</span></button>
+        <SignOut language={language} className={styles.signOut} />
       </form> : <section className={styles.gate}>
         <h2>{unavailable ? t.loadError : t.signIn}</h2>
         {unavailable ? <Link href="/onboarding">{t.retry}</Link> : <GoogleSignIn configured={configured} language={language} className={home.primary} />}
