@@ -26,8 +26,8 @@ import arrow from "./assets/icons/arrow.svg";
 
 type Panel = "request" | "session" | "ask" | "wallet" | CampusPanel | null;
 
-export function HomeScreen({ configured, signedIn = false, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
-  configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
+export function HomeScreen({ configured, signedIn = false, ownRequests = null, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
+  ownRequests?: { id: string; topic: string }[] | null; configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
 }) {
   const [language, setLanguage] = useLanguage();
   const t = copy[language];
@@ -122,7 +122,9 @@ export function HomeScreen({ configured, signedIn = false, authError = false, on
                 <p className={styles.matchedPerson}>{t.person}</p>
                 <button type="button" className={styles.primary} onClick={() => openRequest(0)}>{t.help}{icon(arrow, 24)}</button>
               </section> : <section className={styles.empty}>
-                <h2>{t.requestEmpty}</h2><p>{t.requestEmptyBody}</p>
+                {signedIn && ownRequests === null ? <p>{language === "ko" ? "내 요청을 불러오지 못했어요." : "Couldn’t load your requests."}</p>
+                  : ownRequests?.length ? <><h2>{t.tabs[1]}</h2><ul>{ownRequests.map(row => <li key={row.id}><Link className="underline" href={`/r/${row.id}`}>{row.topic}</Link></li>)}</ul></>
+                  : <><h2>{t.requestEmpty}</h2><p>{t.requestEmptyBody}</p></>}
                 <Link className={styles.primary} href="/ask">{t.ask}{icon(arrow, 24)}</Link>
               </section>}
             </div>
