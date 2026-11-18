@@ -13,7 +13,7 @@ import { canAsk, CREDIT_RULES } from "@/lib/model/ledger";
 import { askCopy } from "./copy";
 import styles from "./ask.module.css";
 
-type AskData = { courses: Offering[]; tags: TopicTag[]; balance: number; reserved: number };
+type AskData = { courses: Offering[]; tags: TopicTag[]; balance: number; reserved: number; initialCourse?: string };
 
 export function AskScreen({ configured, data, unavailable }: { configured: boolean; data?: AskData; unavailable?: boolean }) {
   const [language, setLanguage] = useLanguage();
@@ -66,7 +66,7 @@ export function AskScreen({ configured, data, unavailable }: { configured: boole
 function RequestForm({ data, language, pending, action, state }: {
   data: AskData; language: Language; pending: boolean; action: (form: FormData) => void; state: AskState;
 }) {
-  const [course, setCourse] = useState("");
+  const [course, setCourse] = useState(data.initialCourse ?? "");
   const [minutes, setMinutes] = useState<(typeof durations)[number]>("30");
   const [place, setPlace] = useState("");
   const t = askCopy[language];

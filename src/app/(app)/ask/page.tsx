@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "HelpLoop | Ask for help" };
 
-export default async function AskPage() {
+export default async function AskPage({ searchParams }: { searchParams?: Promise<{ course?: string }> }) {
   const configured = Boolean(getSupabaseEnv());
   if (!configured) return <AskScreen configured={false} />;
 
@@ -21,5 +21,8 @@ export default async function AskPage() {
   if (courses.error || tags.error || balance.error || reserved.error || courses.data.length === 0) {
     return <AskScreen configured unavailable />;
   }
-  return <AskScreen configured data={{ courses: courses.data, tags: tags.data, balance: balance.data, reserved: reserved.data }} />;
+  // e.g. /ask?course=major-advice from Major Explorer's "Ask a senior"; only active codes preselect.
+  const wanted = (await searchParams)?.course;
+  const initialCourse = courses.data.some((c) => c.code === wanted) ? wanted : undefined;
+  return <AskScreen configured data={{ courses: courses.data, tags: tags.data, balance: balance.data, reserved: reserved.data, initialCourse }} />;
 }
