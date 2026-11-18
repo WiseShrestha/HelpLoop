@@ -88,9 +88,9 @@
 .houseRule { font-size: 11px; color: #63636d; line-height: 1.6; margin-top: 12px !important; }
 .safety { font-size: 10px; color: #63636d; margin-top: 5px !important; }
 .navigation { display: flex; align-items: stretch; position: fixed; bottom: 0; left: 0; right: 0; min-height: 60px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--line); background: var(--cream); z-index: 10; color: var(--ink); }
-.navigation button { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; flex: 1; border: 0; background: none; padding: 6px 0; font-size: 11px; color: #62616d; }
-.navigation button[aria-current="page"] { color: #48256e; font-weight: 800; }
-.navigation button[aria-current="page"] img { background: #e4d4f6; border-radius: 8px; }
+.navigation :is(button, a) { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; flex: 1; border: 0; background: none; padding: 6px 0; font-size: 11px; color: #62616d; }
+.navigation :is(button, a)[aria-current="page"] { color: #48256e; font-weight: 800; }
+.navigation :is(button, a)[aria-current="page"] img { background: #e4d4f6; border-radius: 8px; }
 .error { padding: 10px 12px; background: #fae5e1; color: #853d28; border-radius: 12px; font-size: 13px; margin-top: 12px !important; }
 .dialog { color: var(--ink); background: var(--cream); width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 40px); border: 1px solid #ddd5e5; border-radius: 24px; padding: 0; box-shadow: 0 20px 80px #1d16352c; margin: auto; }
 .dialog::backdrop { background: #11172899; }
@@ -161,10 +161,10 @@
   .brand { margin-right: 30px; }
   .brand strong { font-size: 26px; }
   .navigation { position: static; background: none; border: 0; min-height: 44px; margin-right: auto; gap: 5px; color: white; }
-  .navigation button { flex: none; flex-direction: row; gap: 7px; padding: 8px 14px; border-radius: 10px; color: #e0d7eb; }
-  .navigation button img { width: 20px; height: 20px; filter: brightness(0) invert(1); }
-  .navigation button[aria-current="page"] { color: #321b51; background: #e0cdf8; }
-  .navigation button[aria-current="page"] img { background: none; filter: none; }
+  .navigation :is(button, a) { flex: none; flex-direction: row; gap: 7px; padding: 8px 14px; border-radius: 10px; color: #e0d7eb; }
+  .navigation :is(button, a) img { width: 20px; height: 20px; filter: brightness(0) invert(1); }
+  .navigation :is(button, a)[aria-current="page"] { color: #321b51; background: #e0cdf8; }
+  .navigation :is(button, a)[aria-current="page"] img { background: none; filter: none; }
   .darkLayout { max-width: 1080px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 64px; padding: 24px 0 32px; }
   .hero { margin: 0; min-height: 350px; padding-top: 20px; }
   .hero h1 { font-size: 38px; letter-spacing: -1.5px; }
