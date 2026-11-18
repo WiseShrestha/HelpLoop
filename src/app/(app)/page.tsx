@@ -1,4 +1,5 @@
 import { HomeScreen } from "@/components/home/home";
+import { createClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import appIcon from "@/components/home/assets/app-icon.png";
 
@@ -12,7 +13,11 @@ function tomorrowAtTwoKst() {
 export default async function Home({ searchParams }: {
   searchParams: Promise<{ auth_error?: string }>;
 }) {
-  const { auth_error } = await searchParams;
-  const exampleSessionAt = tomorrowAtTwoKst();
-  return <HomeScreen configured={Boolean(getSupabaseEnv())} authError={Boolean(auth_error)} exampleSessionAt={exampleSessionAt} />;
+  const configured = Boolean(getSupabaseEnv());
+  const [query, user] = await Promise.all([
+    searchParams,
+    configured ? createClient().then(async supabase => (await supabase.auth.getUser()).data.user) : null,
+  ]);
+  return <HomeScreen configured={configured} signedIn={Boolean(user)}
+    authError={!user && Boolean(query.auth_error)} exampleSessionAt={tomorrowAtTwoKst()} />;
 }

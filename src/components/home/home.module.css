@@ -226,3 +226,7 @@
 .onboarding .houseRule { color: #d7cae8; margin-top: 24px !important; }
 .darkSurface .navigation :focus-visible { outline-color: #9663cb; }
 @media (min-width: 900px) { .darkSurface .navigation :focus-visible { outline-color: var(--mint); } }
+
+.signedIn { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; padding: 8px 0; color: var(--mint); font-size: 13px; }
+.signedIn span { font-weight: 800; }
+.signedIn a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; border-radius: 10px; background: var(--mint); color: var(--ink); padding: 6px 12px; font-weight: 800; }
