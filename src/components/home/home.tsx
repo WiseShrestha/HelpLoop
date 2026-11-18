@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { SignOut } from "@/components/sign-out";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { useLanguage } from "@/components/locale";
 import { copy } from "./copy";
@@ -24,7 +23,7 @@ import location from "./assets/icons/location.svg";
 import connection from "./assets/icons/connection.svg";
 import arrow from "./assets/icons/arrow.svg";
 
-type Panel = "request" | "session" | "ask" | "wallet" | "profile" | CampusPanel | null;
+type Panel = "request" | "session" | "ask" | "wallet" | CampusPanel | null;
 
 export function HomeScreen({ configured, signedIn = false, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
   configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
@@ -53,7 +52,7 @@ export function HomeScreen({ configured, signedIn = false, authError = false, on
   const auth = (label = t.signIn as string, variant = styles.googleButton) => signedIn ? null : <GoogleSignIn configured={configured} language={language} label={label} className={variant} />;
   const icon = (src: string, size = 22) => <Image src={src} alt="" width={size} height={size} className={styles.icon} />;
   const c = campusCopy[language];
-  const panelTitle = panel === "practice" ? c.practiceHeading : panel === "books" ? c.booksHeading : panel === "trust" ? c.trustHeading : panel === "session" ? t.sessionTopic : panel === "request" ? t.topics[request] : panel === "ask" ? t.askTitle : panel === "wallet" ? t.walletTitle : t.profileTitle;
+  const panelTitle = panel === "practice" ? c.practiceHeading : panel === "books" ? c.booksHeading : panel === "trust" ? c.trustHeading : panel === "session" ? t.sessionTopic : panel === "request" ? t.topics[request] : panel === "ask" ? t.askTitle : t.walletTitle;
   const languageControl = <div className={styles.language} role="group" aria-label={t.language}>
     <button type="button" lang="en" aria-label="English" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
     <button type="button" lang="ko" aria-label="한국어" aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>한국어</button>
@@ -69,13 +68,13 @@ export function HomeScreen({ configured, signedIn = false, authError = false, on
             <span><strong>HelpLoop</strong><span>{t.brand}</span></span>
           </Link>
           {!onboarding && <nav aria-label={t.navigation} className={styles.navigation}>
-            {t.nav.map((label, i) => <button key={i} type="button" aria-current={i === 0 && !panel ? "page" : undefined}
-              onClick={() => i === 0 ? (setTab(2), window.scrollTo({ top: 0, behavior: "smooth" })) : setPanel(i === 1 ? "wallet" : "profile")}>
+            {t.nav.map((label, i) => i === 2 ? <Link key={label} href="/profile">{icon(profile, 24)}<span>{label}</span></Link> : <button key={i} type="button" aria-current={i === 0 && !panel ? "page" : undefined}
+              onClick={() => i === 0 ? (setTab(2), window.scrollTo({ top: 0, behavior: "smooth" })) : setPanel("wallet")}>
               {icon([home, wallet, profile][i], 24)}<span>{label}</span>
             </button>)}
           </nav>}
           {languageControl}
-          {!onboarding && <button type="button" className={styles.account} aria-label={t.account} onClick={() => setPanel("profile")}>{icon(profile)}</button>}
+          {!onboarding && <Link className={styles.account} aria-label={t.account} href="/profile">{icon(profile)}</Link>}
         </header>
 
         {onboarding ? <section className={styles.onboarding}>
@@ -157,13 +156,12 @@ export function HomeScreen({ configured, signedIn = false, authError = false, on
           <button type="button" className={styles.close} aria-label={t.close} onClick={() => dialog.current?.close()}>{icon(close)}</button>
           {(panel === "request" || panel === "session") && <span className={styles.course}>{t.courses[panel === "session" ? 0 : request]}</span>}
           <h2 id="dialog-heading">{panelTitle}</h2>
-          {panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : panel === "wallet" ? t.walletBody : signedIn ? t.signedIn : t.profileBody}</p>}
+          {panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : t.walletBody}</p>}
           {panel === "ask" && <StudyPreferences language={language} />}
           {(panel === "request" || panel === "session") && <><p className={styles.dialogPlace}>{icon(clock)}{t.places[panel === "session" ? 0 : request]}</p>
             {panel === "session" && <p><time dateTime={exampleSessionAt}>{t.sessionTime} · {sampleDate}</time></p>}
             <p className={styles.sample}>{panel === "session" ? t.sessionNote : t.requestNote}</p></>}
           {panel !== "books" && <p className={styles.houseRule}>{t.houseRule}</p>}
-          {panel === "profile" && signedIn && <SignOut language={language} className={styles.primary} />}
           {panel === "ask" ? <Link className={styles.primary} href="/ask">{t.ask}</Link>
             : panel !== "books" && panel !== "trust" && auth(panel === "request" ? t.signInToHelp : t.signIn, styles.primary)}
         </div>
