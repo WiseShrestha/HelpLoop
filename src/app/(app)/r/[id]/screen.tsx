@@ -12,7 +12,7 @@ import styles from "./request.module.css";
 type Data = {
   owner: boolean; status: "open" | "matched" | "cancelled" | "expired" | "completed";
   name: string | null; topic: string; details: string | null; minutes: number | null; place: string; deadline: string;
-  course: { name_en: string; name_ko: string } | null; helpers: string[] | null; session: { scheduled_at: string; place: string } | null;
+  course: { name_en: string; name_ko: string } | null; helpers: string[] | null; session: { id: string; scheduled_at: string; place: string } | null;
 };
 const messages = {
   en: { open: "Open", matched: "Matched", completed: "Completed", cancelled: "Cancelled", expired: "Deadline passed",
@@ -59,7 +59,7 @@ export function RequestScreen({ id, data, gate }: { id: string; data?: Data; gat
           <p>{ko ? "마감" : "Deadline"} · {time(data.deadline)} KST</p>
         </article>
         {data.session && <section className={styles.card}><h2>{ko ? "세션 일정" : "Session details"}</h2>
-          <p>{time(data.session.scheduled_at)} KST · {data.session.place}</p></section>}
+          <p>{time(data.session.scheduled_at)} KST · {data.session.place}</p><Link className={home.primary} href={`/s/${data.session.id}`}>{ko ? "세션 보기" : "View session"}</Link></section>}
         {data.status === "open" && data.owner && <section className={styles.card}>
           <h2>{ko ? "추천 도우미" : "Suggested helpers"}</h2>
           {data.helpers?.length ? <ul>{data.helpers.map((name, i) => <li key={i}>{name}</li>)}</ul>

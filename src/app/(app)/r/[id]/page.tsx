@@ -16,7 +16,7 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   if (!user) return <RequestScreen id={id} gate="login" />;
   const [board, session] = await Promise.all([
     db.from("request_board").select(columns).eq("id", id).maybeSingle(),
-    db.from("sessions").select("scheduled_at, place").eq("request_id", id)
+    db.from("sessions").select("id, scheduled_at, place").eq("request_id", id)
       .or(`asker_id.eq.${user.id},helper_id.eq.${user.id}`).neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (board.error || session.error) return <RequestScreen id={id} gate="error" />;

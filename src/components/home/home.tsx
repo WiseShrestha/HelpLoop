@@ -26,8 +26,8 @@ import arrow from "./assets/icons/arrow.svg";
 
 type Panel = "request" | "session" | "ask" | "wallet" | CampusPanel | null;
 
-export function HomeScreen({ configured, signedIn = false, ownRequests = null, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
-  ownRequests?: { id: string; topic: string }[] | null; configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
+export function HomeScreen({ configured, signedIn = false, ownRequests = null, sessions = null, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
+  sessions?: { id: string; scheduled_at: string; place: string }[] | null; ownRequests?: { id: string; topic: string }[] | null; configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
 }) {
   const [language, setLanguage] = useLanguage();
   const t = copy[language];
@@ -105,7 +105,11 @@ export function HomeScreen({ configured, signedIn = false, ownRequests = null, a
             </div>
             {authError && <p className={styles.error} role="alert">{t.authError}</p>}
             <div id="home-panel" role="tabpanel" aria-labelledby={"tab-" + tab} className={styles.tabPanel}>
-              {tab === 2 ? <section className={styles.session} aria-labelledby="session-title">
+              {tab === 2 && signedIn ? <section className={styles.session}><h2>{t.tabs[2]}</h2>
+                {sessions?.length ? <ul>{sessions.map(s => <li key={s.id}><Link className="underline" href={`/s/${s.id}`}>
+                  {new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(s.scheduled_at))} KST · {s.place}</Link></li>)}</ul>
+                  : <p>{sessions ? t.sessionEmptyBody : language === "ko" ? "세션을 불러오지 못했어요." : "Couldn’t load sessions."}</p>}</section>
+                : tab === 2 ? <section className={styles.session} aria-labelledby="session-title">
                 <span className={styles.eyebrow}>{signedIn ? t.exampleSession : t.nextSession}</span>
                 <h2 id="session-title">{t.courses[0]}</h2><p className={styles.sessionTopic}>{t.sessionTopic}</p>
                 <div className={styles.partner}>
