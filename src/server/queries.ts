@@ -1,18 +1,10 @@
 import "server-only";
 
-import type { Helper } from "@/lib/model/priority";
 import type { TicketBreakdown } from "@/lib/model/tickets";
 
 export { getHelpFeed } from "./helpFeed";
 
-// Fixed examples until A2 implements these queries.
-export async function getSuggestedHelpers(requestId: string): Promise<{ helper: Helper; score: number }[]> {
-  void requestId;
-  return [{
-    helper: { id: "example-helper", courses: ["calc1"], avgRating: null, sessionsThisWeek: 0 },
-    score: 0.5,
-  }];
-}
+export { getSuggestedHelpers } from "./suggestedHelpers";
 
 export async function getWallet(): Promise<{
   balance: number;

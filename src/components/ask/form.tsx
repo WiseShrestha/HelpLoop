@@ -43,7 +43,7 @@ export function AskScreen({ configured, data, unavailable }: { configured: boole
           {state.error ? <p role="alert">{state.error === "invalid"
             ? state.field === "deadline" ? t.futureDeadline : `${t.invalid} · ${state.field ? t.fields[state.field] : t.title}`
             : state.error === "credit" ? t.stale : t[state.error]}</p>
-            : state.postedId && <p role="status">{t.posted}</p>}
+            : state.postedId && <p role="status">{t.posted} <Link className="underline" href={`/r/${state.postedId}`}>{language === "ko" ? "요청 보기" : "View request"}</Link></p>}
         </div>
         <section className={styles.credit} aria-label={t.available}>
           <dl>

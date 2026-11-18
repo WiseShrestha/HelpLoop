@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { HelpFeedCard } from "@/server/helpFeed";
 import type { Language } from "@/components/locale";
@@ -56,7 +57,7 @@ export function LiveFeed({ language }: { language: Language }) {
             {card.newConnection && <li>{ko ? "새 친구" : "New connection"}</li>}
             {card.exchange && <li>{ko ? "언어 교환" : "Language exchange"}</li>}
           </ul>
-          {card.details && <details><summary>{ko ? "요청 내용" : "Request details"}</summary><p>{card.details}</p></details>}
+          <Link className="underline" href={`/r/${card.id}`}>{ko ? "요청 보기" : "View request"}</Link>
         </article>;
       })}
   </div>;

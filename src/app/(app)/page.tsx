@@ -14,10 +14,11 @@ export default async function Home({ searchParams }: {
   searchParams: Promise<{ auth_error?: string }>;
 }) {
   const configured = Boolean(getSupabaseEnv());
-  const [query, user] = await Promise.all([
-    searchParams,
-    configured ? createClient().then(async supabase => (await supabase.auth.getUser()).data.user) : null,
-  ]);
-  return <HomeScreen configured={configured} signedIn={Boolean(user)}
+  const db = configured ? await createClient() : null;
+  const [query, auth] = await Promise.all([searchParams, db?.auth.getUser()]);
+  const user = auth?.data.user;
+  const own = db && user ? await db.from("requests").select("id, topic").eq("asker_id", user.id)
+    .order("created_at", { ascending: false }).limit(30) : null;
+  return <HomeScreen configured={configured} signedIn={Boolean(user)} ownRequests={own?.data ?? null}
     authError={!user && Boolean(query.auth_error)} exampleSessionAt={tomorrowAtTwoKst()} />;
 }
