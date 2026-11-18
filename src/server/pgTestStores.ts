@@ -12,17 +12,23 @@ const file = (path: string) => readFileSync(new URL(path, supabaseDir), "utf8");
 export async function freshDatabase(name: string): Promise<pg.Client> {
   const root = new pg.Client({ database: "postgres" });
   await root.connect();
-  await root.query(`drop database if exists ${name}`);
-  await root.query(`create database ${name}`);
-  await root.end();
-  const owner = new pg.Client({ database: name });
-  await owner.connect();
-  await owner.query(file("tests/supabase_stub.sql"));
-  for (const m of readdirSync(new URL("migrations/", supabaseDir)).filter((f) => f.endsWith(".sql")).sort()) {
-    await owner.query(file(`migrations/${m}`).replace(/^create extension if not exists pg_cron;/m, ""));
+  // Test files run in parallel. On a fresh cluster (CI) their stubs would race to create the
+  // cluster-wide roles, so build one database at a time.
+  await root.query("select pg_advisory_lock(727001)");
+  try {
+    await root.query(`drop database if exists ${name}`);
+    await root.query(`create database ${name}`);
+    const owner = new pg.Client({ database: name });
+    await owner.connect();
+    await owner.query(file("tests/supabase_stub.sql"));
+    for (const m of readdirSync(new URL("migrations/", supabaseDir)).filter((f) => f.endsWith(".sql")).sort()) {
+      await owner.query(file(`migrations/${m}`).replace(/^create extension if not exists pg_cron;/m, ""));
+    }
+    await owner.query(file("seed.sql"));
+    return owner;
+  } finally {
+    await root.end(); // ends the session, releasing the lock
   }
-  await owner.query(file("seed.sql"));
-  return owner;
 }
 
 /** A connection acting as service_role, like the admin client. */
