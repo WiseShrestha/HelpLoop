@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { useLanguage } from "@/components/locale";
-import { useWallet } from "./use-wallet";
 import { LiveFeed } from "./live-feed";
 import { copy } from "./copy";
 import { CampusExplore, CampusDetails, StudyPreferences, campusCopy, type CampusPanel } from "./campus";
@@ -27,15 +26,14 @@ import arrow from "./assets/icons/arrow.svg";
 
 type Panel = "request" | "session" | "ask" | "wallet" | CampusPanel | null;
 
-export function HomeScreen({ configured, signedIn = false, ownRequests = null, sessions = null, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
-  sessions?: { id: string; scheduled_at: string; place: string }[] | null; ownRequests?: { id: string; topic: string }[] | null; configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
+export function HomeScreen({ configured, balance, signedIn = false, ownRequests = null, sessions = null, authError = false, onboarding = false, exampleSessionAt = "2026-11-18T05:00:00Z" }: {
+  balance?: number | null; sessions?: { id: string; scheduled_at: string; place: string }[] | null; ownRequests?: { id: string; topic: string }[] | null; configured: boolean; signedIn?: boolean; authError?: boolean; onboarding?: boolean; exampleSessionAt?: string;
 }) {
   const [language, setLanguage] = useLanguage();
   const t = copy[language];
   const [tab, setTab] = useState(2);
   const [panel, setPanel] = useState<Panel>(null);
-  const walletSummary = useWallet(signedIn, panel === "wallet");
-  const creditMinutes = signedIn ? walletSummary?.balance ?? "—" : 60;
+  const creditMinutes = signedIn ? balance ?? "—" : 60;
   const [request, setRequest] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -72,7 +70,7 @@ export function HomeScreen({ configured, signedIn = false, ownRequests = null, s
             <span><strong>HelpLoop</strong><span>{t.brand}</span></span>
           </Link>
           {!onboarding && <nav aria-label={t.navigation} className={styles.navigation}>
-            {t.nav.map((label, i) => i === 2 ? <Link key={label} href="/profile">{icon(profile, 24)}<span>{label}</span></Link> : <button key={i} type="button" aria-current={i === 0 && !panel ? "page" : undefined}
+            {t.nav.map((label, i) => i === 1 && signedIn ? <Link key={label} href="/wallet">{icon(wallet, 24)}<span>{label}</span></Link> : i === 2 ? <Link key={label} href="/profile">{icon(profile, 24)}<span>{label}</span></Link> : <button key={i} type="button" aria-current={i === 0 && !panel ? "page" : undefined}
               onClick={() => i === 0 ? (setTab(2), window.scrollTo({ top: 0, behavior: "smooth" })) : setPanel("wallet")}>
               {icon([home, wallet, profile][i], 24)}<span>{label}</span>
             </button>)}
@@ -89,9 +87,9 @@ export function HomeScreen({ configured, signedIn = false, ownRequests = null, s
           <section className={styles.hero} aria-labelledby="home-heading">
             <h1 id="home-heading">{t.hero.map((line, i) => <span key={i}>{line}</span>)}</h1>
             <p>{t.subtitle}</p>
-            <button type="button" className={styles.credits} onClick={() => setPanel("wallet")} aria-label={signedIn ? t.walletTitle : t.creditLabel}>
+            {signedIn ? <Link className={styles.credits} href="/wallet"><strong>{creditMinutes}{language === "ko" ? "분" : " min"}</strong><span>{t.credits}</span></Link> : <button type="button" className={styles.credits} onClick={() => setPanel("wallet")} aria-label={signedIn ? t.walletTitle : t.creditLabel}>
               <strong>{creditMinutes}{language === "ko" ? "분" : " min"}</strong><span>{t.credits}</span>
-            </button>
+            </button>}
             <Image className={styles.heroArt} src={notebooks} alt="" width={300} height={200} priority sizes="(min-width: 900px) 280px, 170px" />
           </section>
           <section className={styles.workbench}>
@@ -166,10 +164,7 @@ export function HomeScreen({ configured, signedIn = false, ownRequests = null, s
           <button type="button" className={styles.close} aria-label={t.close} onClick={() => dialog.current?.close()}>{icon(close)}</button>
           {(panel === "request" || panel === "session") && <span className={styles.course}>{t.courses[panel === "session" ? 0 : request]}</span>}
           <h2 id="dialog-heading">{panelTitle}</h2>
-          {panel === "wallet" && signedIn ? <p>{walletSummary
-            ? `${t.credits} · ${walletSummary.balance} / ${language === "ko" ? "이번 주 티켓" : "Tickets this week"} · ${walletSummary.weekTickets}`
-            : language === "ko" ? "지갑 정보를 기다리는 중이에요." : "Waiting for wallet data."}</p>
-            : panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : t.walletBody}</p>}
+          {panel === "practice" || panel === "books" || panel === "trust" ? <CampusDetails language={language} panel={panel} /> : <p>{panel === "session" ? t.withPartner : panel === "request" ? t.detail : panel === "ask" ? t.askBody : t.walletBody}</p>}
           {panel === "ask" && <StudyPreferences language={language} />}
           {(panel === "request" || panel === "session") && <><p className={styles.dialogPlace}>{icon(clock)}{t.places[panel === "session" ? 0 : request]}</p>
             {panel === "session" && <p><time dateTime={exampleSessionAt}>{t.sessionTime} · {sampleDate}</time></p>}

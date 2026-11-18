@@ -1,0 +1,14 @@
+.body { max-width: 42rem; margin: auto; padding: 24px 18px 60px; display: grid; gap: 18px; overflow-wrap: anywhere; }
+.body h1 { font-size: 2rem; font-weight: 800; }
+.body h2 { font-size: 1.25rem; font-weight: 750; }
+.summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.summary div, .body section { padding: 16px; border-radius: 15px; }
+.summary div { background: var(--mint); }
+.summary div + div { background: #e4d5fa; }
+.summary strong { display: block; font-size: 1.8rem; }
+.body section { display: grid; gap: 10px; background: white; border: 1px solid var(--line); }
+.body article { padding: 8px 0; border-top: 1px solid var(--line); }
+.row { display: flex; justify-content: space-between; gap: 8px; }
+.body article a { text-decoration: underline; }
+.body small { color: var(--muted); }
+.claim { background: var(--mint); border-radius: 10px; padding: 8px 14px; margin-top: 8px; }
