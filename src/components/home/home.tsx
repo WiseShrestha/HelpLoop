@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { useLanguage } from "@/components/locale";
+import { LiveFeed } from "./live-feed";
 import { copy } from "./copy";
 import { CampusExplore, CampusDetails, StudyPreferences, campusCopy, type CampusPanel } from "./campus";
 import styles from "./home.module.css";
@@ -116,7 +117,7 @@ export function HomeScreen({ configured, signedIn = false, authError = false, on
                   <div>{icon(location, 24)}<p><strong>{t.sessionPlace}</strong><small>{t.publicPlace}</small></p></div>
                 </div>
                 <button type="button" className={styles.primary} onClick={() => setPanel("session")}>{t.viewSession}{icon(arrow, 24)}</button>
-              </section> : tab === 0 ? <section className={styles.highlightRequest}>
+              </section> : tab === 0 && signedIn ? <section className={styles.empty}><h2>{t.feed}</h2><a href="#help-feed" className={styles.primary}>{t.browse}{icon(arrow, 24)}</a></section> : tab === 0 ? <section className={styles.highlightRequest}>
                 <span className={styles.eyebrow}>{t.courses[0]}</span><h2>{t.topics[0]}</h2><p>{t.places[0]}</p>
                 <p className={styles.matchedPerson}>{t.person}</p>
                 <button type="button" className={styles.primary} onClick={() => openRequest(0)}>{t.help}{icon(arrow, 24)}</button>
@@ -131,16 +132,16 @@ export function HomeScreen({ configured, signedIn = false, authError = false, on
 
       {!onboarding && <div className={styles.lightSurface}>
         <section className={styles.support} id="help-feed" tabIndex={-1}>
-          <p className={styles.sample}>{t.sample}</p>
+          {!signedIn && <p className={styles.sample}>{t.sample}</p>}
           <div className={styles.feedHeading}><h2>{t.feed}</h2><Link className={styles.ask} href="/ask">{t.ask}{icon(plus, 16)}</Link></div>
-          <div className={styles.requestList}>
+          {signedIn ? <LiveFeed language={language} /> : <div className={styles.requestList}>
             {[1, 2].map((index) => <article className={styles.requestRow} key={index}>
               <span className={styles.avatar} aria-hidden="true">{index === 1 ? "J" : "S"}</span>
               <div className={styles.requestCopy}><h3>{t.courses[index]}</h3><p>{t.topics[index]}</p><small>{t.places[index]}</small></div>
               <span className={styles.newPerson}>{t.newPerson}</span>
               <button type="button" className={styles.requestOpen} aria-label={t.openRequest + ": " + t.topics[index]} onClick={() => openRequest(index)}>{icon(chevron, 22)}</button>
             </article>)}
-          </div>
+          </div>}
         </section>
         <CampusExplore language={language} onAsk={() => setPanel("ask")} onOpen={setPanel} />
         <aside className={styles.join}>
