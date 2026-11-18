@@ -12,8 +12,8 @@ import styles from "./profile.module.css";
 type Profile = { display_name: string; department: string; entry_year: number; bio: string | null; help_courses: string[] };
 type Topic = { code: string; name_en: string; name_ko: string };
 
-export function ProfileScreen({ configured, profile, topics = [], unavailable }: {
-  configured: boolean; profile?: Profile; topics?: Topic[]; unavailable?: boolean;
+export function ProfileScreen({ configured, profile, topics = [], unavailable, userId }: {
+  configured: boolean; profile?: Profile; topics?: Topic[]; unavailable?: boolean; userId?: string;
 }) {
   const [language, setLanguage] = useLanguage();
   const router = useRouter();
@@ -43,6 +43,7 @@ export function ProfileScreen({ configured, profile, topics = [], unavailable }:
             })}</ul> : ko ? "아직 선택한 주제가 없어요." : "No help topics selected yet."}</dd>
           </dl>
         </article>
+        {userId && <Link href={`/u/${userId}`} className="underline">{ko ? "공개 프로필 · 도움의 고리 · 도움 기록 →" : "Public profile, loops and help record →"}</Link>}
         <SignOut language={language} className={home.primary} />
       </> : unavailable ? <><p role="alert">{t.loadError}</p><button className={home.primary} onClick={() => router.refresh()}>{t.retry}</button></>
         : <><p>{ko ? "내 프로필을 보려면 로그인해 주세요." : "Sign in to see your profile."}</p><GoogleSignIn configured={configured} language={language} className={home.primary} /></>}
