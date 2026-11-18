@@ -1,0 +1,25 @@
+.body { max-width: 60rem; margin: auto; padding: 24px 18px 60px; display: grid; gap: 18px; overflow-wrap: anywhere; }
+.body h1 { font-size: 1.4rem; font-weight: 800; }
+.body h2 { font-size: 1.2rem; font-weight: 750; }
+.body h3 { font-size: 1rem; font-weight: 700; margin-top: 8px; }
+.body small { color: var(--muted); font-weight: 500; font-size: .85rem; }
+.body section { display: grid; gap: 10px; padding: 16px; border-radius: 15px; background: white; border: 1px solid var(--line); }
+.body code { font-size: .8rem; background: #f1eef8; padding: 2px 4px; border-radius: 4px; word-break: break-all; }
+.body table { width: 100%; border-collapse: collapse; font-size: .9rem; display: block; overflow-x: auto; }
+.body th, .body td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+.body button { border: 1px solid var(--line); background: #f6f4fb; border-radius: 10px; padding: 8px 14px; }
+.weeks { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.weeks a { text-decoration: underline; }
+.form { display: grid; gap: 10px; }
+.form label { display: grid; gap: 4px; font-weight: 650; }
+.form input, .form textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.body .primary { background: var(--purple); border: 0; font-weight: 800; }
+.ok { background: var(--mint); padding: 10px 14px; border-radius: 10px; }
+.err { background: #ffe0e0; padding: 10px 14px; border-radius: 10px; }
+.card { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.card ul { margin: 0; padding-left: 20px; color: #8a3b12; }
+.quote { color: var(--muted); font-style: italic; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.tiles div { background: #f6f4fb; border-radius: 12px; padding: 10px; display: grid; gap: 4px; }
+.tiles span { font-size: .8rem; color: var(--muted); }
+.tiles strong { font-size: 1.4rem; }

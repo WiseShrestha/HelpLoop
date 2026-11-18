@@ -1,16 +1,14 @@
 // Integration test on plain Postgres with the real migrations, grants and constraints.
 // Runs when PGHOST is set (CI starts a Postgres service); skipped otherwise.
-import { readdirSync, readFileSync } from "node:fs";
-import pg from "pg";
+import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import type { RewardsStore, SessionRow } from "./ticketAwards";
+import { freshDatabase, pgRewardsStore, serviceConnection } from "./pgTestStores";
+import type { RewardsStore } from "./ticketAwards";
 
 vi.mock("server-only", () => ({}));
 const { awardSession, recomputeWeek } = await import("./ticketAwards");
 
 const DB = "gp_rewards_test";
-const supabaseDir = new URL("../../supabase/", import.meta.url);
-const file = (path: string) => readFileSync(new URL(path, supabaseDir), "utf8");
 const uid = (n: number) => `00000000-0000-0000-0000-0000000000${n.toString(16).padStart(2, "0")}`;
 const sid = (n: number) => `aaaaaaaa-0000-0000-0000-${String(n).padStart(12, "0")}`;
 const [A, B, C, D, OUTSIDER, ADMIN] = [1, 2, 3, 4, 5, 6].map(uid);
@@ -33,50 +31,13 @@ let owner: pg.Client;
 let service: pg.Client;
 let store: RewardsStore;
 
-// Mirrors rewardsStore.ts, run as service_role like the admin client.
-function pgStore(db: pg.Client): RewardsStore {
-  const cols = "id, helper_id, asker_id, minutes, rating, status, completed_at";
-  const rows = async (text: string, values: unknown[]) =>
-    (await db.query(text, values)).rows.map((r) => ({ ...r, completed_at: r.completed_at?.toISOString() ?? null }) as SessionRow);
-  return {
-    session: async (id) => (await rows(`select ${cols} from sessions where id = $1`, [id]))[0] ?? null,
-    completedBetween: (a, b) => rows(`select ${cols} from sessions where status = 'completed'
-      and ((helper_id = $1 and asker_id = $2) or (helper_id = $2 and asker_id = $1))`, [a, b]),
-    completedBefore: (end) => rows(`select ${cols} from sessions where status = 'completed' and completed_at < $1`, [end]),
-    isAdmin: async (id) => (await db.query("select is_admin from profiles where id = $1", [id])).rows[0]?.is_admin === true,
-    async upsertAwards(awards) {
-      for (const a of awards) {
-        await db.query(`insert into ticket_awards (session_id, helper_id, week_start, tickets, breakdown)
-          values ($1, $2, $3, $4, $5) on conflict (session_id) do update set helper_id = excluded.helper_id,
-          week_start = excluded.week_start, tickets = excluded.tickets, breakdown = excluded.breakdown`,
-          [a.session_id, a.helper_id, a.week_start, a.tickets, JSON.stringify(a.breakdown)]);
-      }
-    },
-    weekAwardIds: async (week) =>
-      (await db.query("select session_id from ticket_awards where week_start = $1", [week])).rows.map((r) => r.session_id),
-    deleteAwards: async (ids) => void (await db.query("delete from ticket_awards where session_id = any($1::uuid[])", [ids])),
-  };
-}
-
 const awards = async () => (await owner.query(
   "select session_id, tickets::float8 as tickets, week_start::text as week, created_at from ticket_awards order by session_id",
 )).rows;
 
 describe.skipIf(!process.env.PGHOST)("ticket awards on Postgres", () => {
   beforeAll(async () => {
-    const root = new pg.Client({ database: "postgres" });
-    await root.connect();
-    await root.query(`drop database if exists ${DB}`);
-    await root.query(`create database ${DB}`);
-    await root.end();
-
-    owner = new pg.Client({ database: DB });
-    await owner.connect();
-    await owner.query(file("tests/supabase_stub.sql"));
-    for (const m of readdirSync(new URL("migrations/", supabaseDir)).filter((f) => f.endsWith(".sql")).sort()) {
-      await owner.query(file(`migrations/${m}`).replace(/^create extension if not exists pg_cron;/m, ""));
-    }
-    await owner.query(file("seed.sql"));
+    owner = await freshDatabase(DB);
 
     const users = [A, B, C, D, OUTSIDER, ADMIN];
     await owner.query("insert into auth.users select unnest($1::uuid[])", [users]);
@@ -93,10 +54,8 @@ describe.skipIf(!process.env.PGHOST)("ticket awards on Postgres", () => {
         [sid(i + 1), helper, asker, minutes, at ? "completed" : "scheduled", at, rating]);
     }
 
-    service = new pg.Client({ database: DB });
-    await service.connect();
-    await service.query("set role service_role");
-    store = pgStore(service);
+    service = await serviceConnection(DB);
+    store = pgRewardsStore(service);
   }, 60_000);
 
   afterAll(async () => {
