@@ -14,12 +14,12 @@ const words = {
   en: { title:"My wallet", balance:"Help credits", tickets:"Tickets this week", minutes:"min", why:"How you earned tickets", history:"Credit history",
     empty:"Help a classmate and confirm the session together to earn your first tickets.", noEntries:"No credit transactions yet.", pair:"New connection", repeat:"Repeat pair", rating:"Rating factor", base:"Base tickets", session:"View session",
     perks:"Perks", noPerks:"No perks available yet.", claim:"Claim perk", claimed:"Perk claimed", already:"Already claimed", credit:"More credits needed.", full:"All places are taken.",
-    unavailable:"Couldn’t load or update your wallet.", retry:"Try again", login:"Sign in to see your wallet.", draw:"This week’s draw", hash:"Published draw code", noDraw:"Draw details haven’t been published yet.",
+    unavailable:"Couldn’t load or update your wallet.", retry:"Try again", login:"Sign in to see your wallet.", draw:"This week’s draw", hash:"Published draw code", noDraw:"Draw details haven’t been published yet.", allDraws:"How the draw works and past winners →",
     cap:"Session tickets are capped at 10 per week. Loop bonuses can add up to 2 more.", starter:"Starting credits", session_earned:"Study help given", session_spent:"Study help received", perk:"Perk redemption", admin:"Credit adjustment" },
   ko: { title:"내 지갑", balance:"도움 크레딧", tickets:"이번 주 티켓", minutes:"분", why:"티켓 적립 내역", history:"크레딧 내역",
     empty:"친구를 도와주고 함께 세션을 확인하면 첫 티켓을 받아요.", noEntries:"아직 크레딧 내역이 없어요.", pair:"새 친구", repeat:"반복 만남", rating:"평점 배수", base:"기본 티켓", session:"세션 보기",
     perks:"혜택", noPerks:"아직 이용할 수 있는 혜택이 없어요.", claim:"혜택 신청", claimed:"신청 완료", already:"이미 신청했어요", credit:"크레딧이 부족해요.", full:"정원이 찼어요.",
-    unavailable:"지갑을 불러오거나 갱신하지 못했어요.", retry:"다시 시도", login:"지갑을 보려면 로그인해 주세요.", draw:"이번 주 추첨", hash:"공개된 추첨 코드", noDraw:"아직 추첨 정보가 없어요.",
+    unavailable:"지갑을 불러오거나 갱신하지 못했어요.", retry:"다시 시도", login:"지갑을 보려면 로그인해 주세요.", draw:"이번 주 추첨", hash:"공개된 추첨 코드", noDraw:"아직 추첨 정보가 없어요.", allDraws:"추첨 방법과 지난 당첨자 보기 →",
     cap:"세션 티켓은 주당 최대 10장이고, 루프 보너스로 최대 2장을 더 받을 수 있어요.", starter:"시작 크레딧", session_earned:"도움 제공", session_spent:"도움 받음", perk:"혜택 사용", admin:"크레딧 조정" }
 };
 type Wallet = Awaited<ReturnType<typeof getWallet>>;
@@ -59,7 +59,7 @@ export function WalletScreen({ wallet, perks = [], gate }: { wallet?:Wallet; per
           {perks.map(p => <article key={p.id}><h3>{p.title}</h3><p>{[p.department,p.host_label].filter(Boolean).join(" · ")} · {p.cost_minutes} {t.minutes}</p>
             <form action={action}><button className={styles.claim} disabled={pending || p.claimed || p.cost_minutes > wallet.balance} name="perk" value={p.id}>{p.claimed ? t.already : t.claim}</button></form></article>)}
           {feedback && <p role="status">{t[feedback as keyof typeof t]}</p>}</section>
-        <section><h2>{t.draw}</h2>{wallet.draw ? <><p>{wallet.draw.prizes.map(p=>p.label).join(" · ")}</p><small>{t.hash}</small><code>{wallet.draw.commitHash}</code></> : <p>{t.noDraw}</p>}</section>
+        <section><h2>{t.draw}</h2>{wallet.draw ? <><p>{wallet.draw.prizes.map(p=>p.label).join(" · ")}</p><small>{t.hash}</small><code>{wallet.draw.commitHash}</code></> : <p>{t.noDraw}</p>}<Link href="/draw">{t.allDraws}</Link></section>
       </>}
     </div></main>;
 }
