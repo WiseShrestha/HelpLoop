@@ -17,5 +17,5 @@ export default async function ProfilePage() {
   const codes = profile.data.help_courses;
   const topics = codes.length ? await db.from("courses").select("code, name_en, name_ko").in("code", codes) : { data: [], error: null };
   if (topics.error) return <ProfileScreen configured unavailable />;
-  return <ProfileScreen configured profile={profile.data} topics={topics.data} />;
+  return <ProfileScreen configured profile={profile.data} topics={topics.data} userId={user.id} />;
 }
