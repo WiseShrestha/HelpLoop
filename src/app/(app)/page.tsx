@@ -17,9 +17,9 @@ export default async function Home({ searchParams }: {
   const db = configured ? await createClient() : null;
   const [query, auth] = await Promise.all([searchParams, db?.auth.getUser()]);
   const user = auth?.data.user;
-  const [own, sessions] = db && user ? await Promise.all([db.from("requests").select("id, topic").eq("asker_id", user.id)
+  const [own, sessions, balance] = db && user ? await Promise.all([db.from("requests").select("id, topic").eq("asker_id", user.id)
     .order("created_at", { ascending: false }).limit(30), db.from("sessions").select("id, scheduled_at, place").or(`asker_id.eq.${user.id},helper_id.eq.${user.id}`)
-    .order("created_at", { ascending: false }).limit(30)]) : [null, null];
-  return <HomeScreen configured={configured} signedIn={Boolean(user)} ownRequests={own?.data ?? null} sessions={sessions?.data ?? null}
+    .order("created_at", { ascending: false }).limit(30), db.rpc("my_balance")]) : [null, null, null];
+  return <HomeScreen configured={configured} signedIn={Boolean(user)} balance={balance?.data} ownRequests={own?.data ?? null} sessions={sessions?.data ?? null}
     authError={!user && Boolean(query.auth_error)} exampleSessionAt={tomorrowAtTwoKst()} />;
 }

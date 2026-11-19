@@ -4,20 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/db/types";
 import type { RewardsStore, SessionRow } from "./ticketAwards";
 
+import { readAll } from "./readAll";
+
 const COLUMNS = "id, helper_id, asker_id, minutes, rating, status, completed_at";
-const PAGE = 1000; // PostgREST's default row limit
-
-type Page<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
-
-async function readAll<T>(page: (from: number, to: number) => Page<T>): Promise<T[]> {
-  const rows: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await page(from, from + PAGE - 1);
-    if (error) throw new Error(`Ticket store read failed: ${error.message}`);
-    rows.push(...(data ?? []));
-    if (!data || data.length < PAGE) return rows;
-  }
-}
 
 function check(error: { message: string } | null, action: string) {
   if (error) throw new Error(`Ticket store ${action} failed: ${error.message}`);
