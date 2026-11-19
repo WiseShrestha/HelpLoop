@@ -1,0 +1,12 @@
+.body { max-width: 42rem; margin: auto; padding: 24px 18px 60px; display: grid; gap: 16px; overflow-wrap: anywhere; }
+.body h1 { font-size: 2rem; font-weight: 800; }
+.body section { padding: 16px; border-radius: 15px; background: white; border: 1px solid var(--line); }
+.picker { display: grid; gap: 6px; font-weight: 700; }
+.picker select { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: white; min-height: 44px; }
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.label { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: .95rem; margin-bottom: 6px; }
+.label span:last-child { color: var(--muted); font-size: .85rem; }
+.track { position: relative; height: 14px; border-radius: 7px; background: #f1eef8; }
+.bar { height: 100%; border-radius: 7px; background: var(--purple); min-width: 4px; }
+.marker { position: absolute; top: -3px; width: 2px; height: 20px; background: var(--ink); }
+.note { color: var(--muted); font-size: .85rem; }
