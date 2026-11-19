@@ -48,5 +48,29 @@ export function supabaseRewardsStore(db: SupabaseClient<Database>): RewardsStore
       const { error } = await db.from("ticket_awards").delete().in("session_id", sessionIds);
       check(error, "delete");
     },
+    completedWithin: (start, end) => readAll((from, to) => completed().gte("completed_at", start.toISOString())
+      .lte("completed_at", end.toISOString()).order("id").range(from, to)),
+    async rewardedLoopKeys(keys) {
+      const { data, error } = await db.from("loop_bonuses").select("loop_key").in("loop_key", keys);
+      check(error, "read");
+      return [...new Set((data ?? []).map((r) => r.loop_key))];
+    },
+    async loopBonusCounts(weekStart, userIds) {
+      const { data, error } = await db.from("loop_bonuses").select("user_id").eq("week_start", weekStart).in("user_id", userIds);
+      check(error, "read");
+      const counts = new Map<string, number>();
+      for (const r of data ?? []) counts.set(r.user_id, (counts.get(r.user_id) ?? 0) + 1);
+      return counts;
+    },
+    async insertLoopBonuses(rows) {
+      const { error } = await db.from("loop_bonuses").upsert(rows, { onConflict: "loop_key,user_id", ignoreDuplicates: true });
+      check(error, "write");
+    },
+    weekLoopBonuses: (weekStart) => readAll((from, to) => db.from("loop_bonuses").select("loop_key,session_ids")
+      .eq("week_start", weekStart).order("loop_key").order("user_id").range(from, to)),
+    async deleteLoops(keys) {
+      const { error } = await db.from("loop_bonuses").delete().in("loop_key", keys);
+      check(error, "delete");
+    },
   };
 }
