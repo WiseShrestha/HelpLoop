@@ -149,6 +149,11 @@ export function HomeScreen({ configured, signedIn = false, ownRequests = null, s
             </article>)}
           </div>}
         </section>
+        <nav className={styles.explore} aria-labelledby="explore-heading">
+          <h2 id="explore-heading">{t.explore}</h2>
+          <ul>{t.exploreLinks.filter((l) => signedIn || l.public).map((l) => <li key={l.href}>
+            <Link href={l.href}><strong>{l.label}</strong><span>{l.note}</span></Link></li>)}</ul>
+        </nav>
         <CampusExplore language={language} onAsk={() => setPanel("ask")} onOpen={setPanel} />
         <aside className={styles.join}>
           {!signedIn && <div className={styles.googleEntry}><Image src={google} alt="" width={20} height={20} />{auth()}</div>}
