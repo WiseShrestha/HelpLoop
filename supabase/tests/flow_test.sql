@@ -409,3 +409,29 @@ reset role;
 select expect_true(not exists (
  select 1 from sessions where request_id in ('40000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000002')
 ), 'refused matches create no sessions');
+
+-- C7: perks count reserved request minutes; draws start on Monday.
+insert into auth.users values ('70000000-0000-0000-0000-000000000001'),('70000000-0000-0000-0000-000000000002');
+insert into profiles (id,display_name,entry_year,consent) values
+ ('70000000-0000-0000-0000-000000000001','Perk reserver',2026,true),('70000000-0000-0000-0000-000000000002','Perk no identity',2026,true);
+insert into private_profiles values ('70000000-0000-0000-0000-000000000001','Perk fixture','20267001',null);
+insert into perks (id,title,host_label,cost_minutes,capacity) values ('70000000-0000-0000-0000-0000000000aa','C7 coffee','EE senior',60,5);
+set role authenticated; set request.jwt.claim.sub='70000000-0000-0000-0000-000000000001';
+insert into requests (asker_id,course_code,topic,minutes,deadline,place) values
+ (auth.uid(),'calc1','C7 first',60,now()+interval '1 day','Library'),(auth.uid(),'calc1','C7 second',30,now()+interval '1 day','Library');
+select expect_error($$select claim_perk('70000000-0000-0000-0000-0000000000aa')$$, 'perk cannot spend reserved minutes');
+select expect_true((select my_balance() = 60 and count(*) = 0 from perk_claims where user_id = auth.uid()), 'refused perk leaves balance and claims unchanged');
+update requests set status='cancelled' where asker_id=auth.uid();
+select expect_true((select claim_perk('70000000-0000-0000-0000-0000000000aa') is not null), 'perk is claimable once reservations are released');
+select expect_true((select my_balance() = 0), 'perk spends the balance');
+select expect_error($$insert into requests (asker_id,course_code,topic,minutes,deadline,place) values
+ (auth.uid(),'calc1','After perk',45,now()+interval '1 day','Library')$$, 'perk spending also limits new requests');
+set request.jwt.claim.sub='70000000-0000-0000-0000-000000000002';
+select expect_error($$select claim_perk('70000000-0000-0000-0000-0000000000aa')$$, 'perk requires completed onboarding');
+reset role;
+select expect_error($$insert into draws (week_start,commit_hash,prizes) values ('2026-11-15','x','[]')$$, 'draw week cannot be a Sunday');
+insert into draws (week_start,commit_hash,prizes) values ('2026-11-30','x','[]');
+select expect_true((select count(*) = 1 from draws where week_start = '2026-11-30'), 'Monday draw week accepted');
+delete from draws where week_start = '2026-11-30';
+select expect_true(not has_function_privilege('anon','claim_perk(uuid)','EXECUTE')
+ and has_function_privilege('authenticated','claim_perk(uuid)','EXECUTE'), 'replaced claim_perk keeps its permissions');
