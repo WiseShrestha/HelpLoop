@@ -66,6 +66,13 @@
 .highlightRequest > .primary, .empty > .primary { margin-top: auto; }
 .lightSurface { padding: 0 18px; max-width: 1080px; margin: auto; }
 .support { padding-top: 12px; }
+.explore { margin: 20px 0 8px; }
+.explore h2 { font-size: 19px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 10px; }
+.explore ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.explore a { display: grid; gap: 3px; height: 100%; padding: 12px; border-radius: 13px; background: white; border: 1px solid var(--line); color: inherit; text-decoration: none; }
+.explore a:hover { border-color: var(--purple); }
+.explore strong { font-size: 15px; }
+.explore span { font-size: 12px; color: var(--muted); line-height: 1.35; }
 .sample { font-size: 10px; text-align: right; color: #62616a; }
 .support > .sample { margin-left: auto; width: fit-content; padding: 2px 7px; background: #eeecec; border-radius: 10px; }
 .feedHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 12px 0 12px; }
